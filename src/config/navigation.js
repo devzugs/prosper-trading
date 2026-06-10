@@ -18,7 +18,7 @@ export const APP_SIDEBAR_NAV = [
     section: "Portfolio",
     items: [
       { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-      { label: "Transactions", to: "/dashboard/transactions", icon: ScrollText },
+      { label: "Transactions", to: "/transaction-history", icon: ScrollText },
     ],
   },
   {
