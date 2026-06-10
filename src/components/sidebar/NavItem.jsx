@@ -1,15 +1,11 @@
 import React from "react";
 import { useState } from "react";
-import { Link, useLocation  } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 
-
-
-
-
-const NavItem = ({ item, depth = 0 }) => {
+const NavItem = ({ item, depth = 0, onClose }) => {
   const location = useLocation();
-  const hasChildren = item.children?.length > 0;
+  const hasChildren = item.children && item.children.length > 0;
   const isActive = location.pathname === item.to;
   const isParentActive =
     hasChildren && item.children.some((c) => location.pathname === c.to);
@@ -52,7 +48,12 @@ const NavItem = ({ item, depth = 0 }) => {
           {open && (
             <ul className="mt-1 ml-4 border-l border-white/5 pl-3 space-y-1">
               {item.children.map((child) => (
-                <NavItem key={child.to} item={child} depth={depth + 1} />
+                <NavItem 
+                  key={child.to} 
+                  item={child} 
+                  depth={depth + 1} 
+                  onClose={onClose} // Passed the onClose prop to children
+                />
               ))}
             </ul>
           )}
@@ -60,6 +61,7 @@ const NavItem = ({ item, depth = 0 }) => {
       ) : (
         <Link
           to={item.to}
+          onClick={onClose} // Triggers the close function when a link is clicked
           className={`
             group my-transition flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium
             ${depth > 0 ? "py-2" : ""}

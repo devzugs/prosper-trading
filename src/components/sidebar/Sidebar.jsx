@@ -1,18 +1,16 @@
-import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Settings } from "lucide-react";
 import { APP_SIDEBAR_NAV } from "../../config/navigation";
 import NavItem from "./NavItem";
 import UserFooter from "./UserFooter";
 
 
-const Sidebar = () => {
+const Sidebar = ({ onClose }) => {
   return (
     <aside className="flex h-screen w-75 shrink-0 flex-col border-r border-white/5 bg-surface-alt md:bg-background font-body">
 
       {/* Logo */}
       <div className="border-b border-white/5 px-5 py-5">
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3 "onClick={onClose}>
           <img
             src="/prosper-logo.webp"
             alt="Prosper Trading"
@@ -38,7 +36,10 @@ const Sidebar = () => {
             </p>
             <ul className="space-y-1">
               {items.map((item) => (
-                <NavItem key={item.to} item={item} />
+                <NavItem 
+                  key={item.to} 
+                  item={item}
+                  onClose={onClose} />
               ))}
             </ul>
           </div>
