@@ -1,0 +1,26 @@
+import React from "react";
+import { Settings } from "lucide-react";
+
+const UserFooter = () => {
+    return (
+        <div className="border-t border-white/5 px-4 py-4">
+            <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent">
+                MA
+            </div>
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-white">
+                M. Anderson
+                </p>
+                <p className="truncate text-[11px] text-accent">Growth Plan</p>
+            </div>
+            <Settings
+                size={15}
+                className="shrink-0 text-text-muted my-transition hover:text-text-light cursor-pointer"
+            />
+            </div>
+      </div>
+    )
+}
+
+export default UserFooter;
