@@ -66,33 +66,11 @@ const DashboardTopBar = ({
             >
               <Menu size={22} />
             </button>
-
-            {/* UTC Clock */}
-            <div className="hidden md:flex items-center gap-2 rounded-lg border border-white/5 bg-surface-alt px-3 py-1.5">
-              <Clock3 size={14} className="text-accent" />
-              <span className="text-sm font-medium text-text-light">
-                {time.toLocaleTimeString("en-GB", {
-                  timeZone: "UTC",
-                })}
-              </span>
-              <span className="text-xs text-text-muted">
-                UTC
-              </span>
-            </div>
-
             {/* Page Title */}
             <div className="min-w-0">
               <h1 className="truncate text-lg font-semibold text-white">
                 {title}
               </h1>
-            </div>
-
-            {/* Market Status */}
-            <div className="hidden xl:flex items-center gap-2 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1">
-              <span className="h-2 w-2 rounded-full bg-green-500" />
-              <span className="text-xs font-medium text-green-400">
-                Markets Active
-              </span>
             </div>
           </div>
 

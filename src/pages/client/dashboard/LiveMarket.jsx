@@ -1,66 +1,63 @@
 import React from "react";
 import useCryptoData from "../../../hooks/UseCryptoData";
-
-import { Activity, TrendingUp, TrendingDown, Zap } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 const LiveMarket = () => {
-  const { coins, loading, error, lastUpdated,  } = useCryptoData('bitcoin,ethereum,solana,binancecoin');
+    // I added two assets to your string here just to test the 6-column density. Revert if needed.
+    const { coins, loading, error } = useCryptoData('bitcoin,ethereum,solana,binancecoin,ripple,cardano');
 
-  if (loading) return <div className="p-6 text-center text-text-muted text-sm">Loading prices…</div>;
-  if (error) return <div className="p-6 text-center text-danger text-sm">Failed to load</div>;
+    if (loading) return <div className="p-6 text-center text-text-muted text-sm">Loading prices…</div>;
+    if (error) return <div className="p-6 text-center text-danger text-sm">Failed to load</div>;
+    
     return (
-        <div className="p-6">
-            <div className="flex justify-between p-3 border-b border-border ">
-                <div className="flex gap-2 items-center">
-                    <span className="text-success">
-                        <Activity
-                        size={15}/>
-                    </span>
-                    <span className="text-[14px] text-text-muted">Live Market</span>
-                </div>
-                <div className="flex gap-1 items-center text-success">
-                    <Zap 
-                    size={15}/>
-                    <span className="text-xs ">Live</span>
-                </div>
-
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 mt-3">
+        // Adjusted padding to align strictly with the global container edges
+        <div className="px-6 mb-6">
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {coins.map((coin) => (
-                <div key={coin.id} className="bg-secondary rounded-lg p-3 border border-border/50">
-                    <div className="flex items-center gap-2 mb-2">
-                    <img 
-                        src={coin.image} 
-                        alt={coin.name} 
-                        className="w-6 h-6 rounded-full"
-                    />
-                    <div>
-                        <p className="text-xs font-semibold text-text-muted uppercase">{coin.symbol}</p>
-                        <p className="text-[10px] text-text-muted/70">{coin.name}</p>
+                    <div 
+                        key={coin.id} 
+                        className="bg-surface-alt rounded-lg p-2.5 border border-border hover:border-accent/40 my-transition"
+                    >
+                        {/* Top Row: Asset Identity & Delta */}
+                        <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <img 
+                                    src={coin.image} 
+                                    alt={coin.name} 
+                                    className="w-5 h-5 rounded-full"
+                                />
+                                <p className="text-xs font-bold text-heading uppercase">{coin.symbol}</p>
+                            </div>
+                            
+                            <div className={`flex items-center gap-0.5 text-[10px] font-bold ${
+                                coin.price_change_percentage_24h >= 0 ? 'text-success' : 'text-danger'
+                            }`}>
+                                {coin.price_change_percentage_24h >= 0 ? (
+                                    <TrendingUp size={10} strokeWidth={3} />
+                                ) : (
+                                    <TrendingDown size={10} strokeWidth={3} />
+                                )}
+                                {coin.price_change_percentage_24h > 0 ? '+' : ''}
+                                {coin.price_change_percentage_24h?.toFixed(2)}%
+                            </div>
+                        </div>
+                        
+                        {/* Bottom Row: Formatted Price */}
+                        <div>
+                            <p className="text-sm font-bold text-heading">
+                                ${coin.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                            </p>
+                        </div>
                     </div>
-                    </div>
-                    <p className="text-sm font-bold text-text-primary mb-1">
-                    {coin.current_price}
-                    </p>
-                    <div className={`flex items-center gap-1 text-xs font-medium ${
-                    coin.price_change_percentage_24h >= 0 ? 'text-success' : 'text-danger'
-                    }`}>
-                    {coin.price_change_percentage_24h >= 0 ? (
-                        <TrendingUp size={12} />
-                    ) : (
-                        <TrendingDown size={12} />
-                    )}
-                    {coin.price_change_percentage_24h > 0 ? '+' : ''}
-                    {coin.price_change_percentage_24h.toFixed(2)}% <span className="text-text-muted/60">24h</span>
-                    </div>
-                </div>
                 ))}
             </div>
 
-            <div className="flex justify-between items-center p-3 border-t border-border text-[11px] text-text-muted/70">
-                <span>Updates every 60s</span>
+            {/* Minimal Footer */}
+            <div className="text-right mt-1.5">
+                <span className="text-[10px] text-text-muted font-medium">Updates every 60s</span>
             </div>
-    </div>
+        </div>
     )
 }
 

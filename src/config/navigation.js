@@ -15,9 +15,15 @@ export const PUBLIC_NAV = [
 // Authenticated  Links
 export const APP_SIDEBAR_NAV = [
   {
-    section: "Main",
+    section: "Portfolio",
     items: [
-      { label: "Overview", to: "/dashboard", icon: LayoutDashboard },
+      { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+      { label: "Transactions", to: "/dashboard/transactions", icon: ScrollText },
+    ],
+  },
+  {
+    section: "Funding",
+    items: [
       { label: "Deposit", to: "/dashboard/deposit", icon: ArrowDownToLine },
       {
         label: "Withdraw",
@@ -28,13 +34,12 @@ export const APP_SIDEBAR_NAV = [
           { label: "Withdraw", to: "/", icon: Wallet}
         ],
       },
-      { label: "Transaction History", to: "/dashboard/transactions", icon: ScrollText },
-      { label: "Markets", to: "/markets", icon: ChartColumn},
     ],
   },
   {
-    section: "Community",
+    section: "Market",
     items: [
+      { label: "Markets", to: "/markets", icon: ChartColumn},
       {label: "Leaderboard", to: "/dashboard/leaderboard", icon: Trophy, },
     ],
   },

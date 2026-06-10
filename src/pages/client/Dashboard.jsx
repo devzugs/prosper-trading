@@ -4,6 +4,7 @@ import LiveMarket from "./dashboard/LiveMarket";
 import QuickLinks from "./dashboard/QuickLinks";
 import TradingChart from "./dashboard/TradingCharts";
 import PortfolioPerformance from "./dashboard/PortfolioPerformance";
+import TransactionHistoryWidget from "./dashboard/TransactionHistoryWidget";
 const Dashboard = () => {
     return (
         <>
@@ -18,10 +19,10 @@ const Dashboard = () => {
                 </div>
             </div>
             <Portfolio />
-            <PortfolioPerformance />
             <QuickLinks />
+            <PortfolioPerformance />
             <LiveMarket />
-            
+            <TransactionHistoryWidget />
         </>
     )
 }
