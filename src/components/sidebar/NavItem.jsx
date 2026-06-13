@@ -52,7 +52,7 @@ const NavItem = ({ item, depth = 0, onClose }) => {
                   key={child.to} 
                   item={child} 
                   depth={depth + 1} 
-                  onClose={onClose} // Passed the onClose prop to children
+                  onClose={onClose} 
                 />
               ))}
             </ul>
@@ -61,7 +61,7 @@ const NavItem = ({ item, depth = 0, onClose }) => {
       ) : (
         <Link
           to={item.to}
-          onClick={onClose} // Triggers the close function when a link is clicked
+          onClick={onClose} 
           className={`
             group my-transition flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium
             ${depth > 0 ? "py-2" : ""}

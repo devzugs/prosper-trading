@@ -24,7 +24,7 @@ export const APP_SIDEBAR_NAV = [
   {
     section: "Funding",
     items: [
-      { label: "Deposit", to: "/dashboard/deposit", icon: ArrowDownToLine },
+      { label: "Deposit", to: "/deposit", icon: ArrowDownToLine },
       {
         label: "Withdraw",
         to: "/dashboard/withdraw",

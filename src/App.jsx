@@ -6,6 +6,7 @@ import LandingPage from './pages/public/LandingPage';
 import ClientLayout from './layouts/ClientLayout';
 import Dashboard from './pages/client/Dashboard';
 import TransactionHistoryPage from './pages/client/transactions/TransactionHistory';
+import DepositPage from './pages/client/deposit/DepositPage';
 
 
 const App = () =>{
@@ -23,6 +24,7 @@ const App = () =>{
         <Route element={<ClientLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/transaction-history" element={<TransactionHistoryPage />} />
+          <Route path="/deposit" element={<DepositPage />} />
         </Route>
       </Routes>
   
