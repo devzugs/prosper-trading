@@ -30,8 +30,8 @@ export const APP_SIDEBAR_NAV = [
         to: "/dashboard/withdraw",
         icon: ArrowUpFromLine,
         children: [
-          { label: "Payment Details", to: "/dashboard/withdraw/payment-details", icon: CreditCard },
-          { label: "Withdraw", to: "/", icon: Wallet}
+          { label: "Withdraw", to: "/", icon: Wallet},
+          { label: "Payment Details", to: "/payment-details", icon: CreditCard },
         ],
       },
     ],
