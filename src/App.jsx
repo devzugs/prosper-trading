@@ -7,7 +7,7 @@ import ClientLayout from './layouts/ClientLayout';
 import Dashboard from './pages/client/Dashboard';
 import TransactionHistoryPage from './pages/client/transactions/TransactionHistory';
 import DepositPage from './pages/client/deposit/DepositPage';
-import PaymentDetails from './pages/client/withdraw/PaymentDetails';
+import PaymentDetailsPage from './pages/client/withdraw/payment-details/PaymentDetailsPage';
 
 
 const App = () =>{
@@ -26,7 +26,7 @@ const App = () =>{
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/transaction-history" element={<TransactionHistoryPage />} />
           <Route path="/deposit" element={<DepositPage />} />
-          <Route path="/payment-details" element={<PaymentDetails />} />
+          <Route path="/payment-details" element={<PaymentDetailsPage />} />
         </Route>
       </Routes>
   
