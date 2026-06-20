@@ -9,6 +9,7 @@ import TransactionHistoryPage from './pages/client/transactions/TransactionHisto
 import DepositPage from './pages/client/deposit/DepositPage';
 import PaymentDetailsPage from './pages/client/withdraw/payment-details/PaymentDetailsPage';
 import Leaderboard from './pages/client/leaderboard/Leaderboard';
+import SettingsPage from './pages/client/settings/SettingsPage';
 
 
 const App = () =>{
@@ -29,6 +30,7 @@ const App = () =>{
           <Route path="/deposit" element={<DepositPage />} />
           <Route path="/payment-details" element={<PaymentDetailsPage />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>
   

@@ -48,7 +48,7 @@ export const APP_SIDEBAR_NAV = [
     items: [
       {
         label: "Settings",
-        to: "/dashboard/settings",
+        to: "/settings",
         icon: Settings,
       },
       {

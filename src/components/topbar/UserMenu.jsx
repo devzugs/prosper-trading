@@ -25,8 +25,8 @@ const UserMenu = ({ open, onClose }) => {
 
       <ul className="py-1">
         {[
-          { label: "Profile", icon: CircleUserRound, to: "/dashboard/profile" },
-          { label: "Settings", icon: Settings, to: "/dashboard/settings" },
+          { label: "Profile", icon: CircleUserRound, to: "/settings" },
+          { label: "Settings", icon: Settings, to: "/settings" },
         ].map(({ label, icon: Icon, to }) => (
           <li key={label}>
             <Link

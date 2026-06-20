@@ -14,10 +14,7 @@ const UserFooter = () => {
                 </p>
                 <p className="truncate text-[11px] text-accent">Growth Plan</p>
             </div>
-            <Settings
-                size={15}
-                className="shrink-0 text-text-muted my-transition hover:text-text-light cursor-pointer"
-            />
+            
             </div>
       </div>
     )
