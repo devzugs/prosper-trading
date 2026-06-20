@@ -40,7 +40,7 @@ export const APP_SIDEBAR_NAV = [
     section: "Market",
     items: [
       { label: "Markets", to: "/markets", icon: ChartColumn},
-      {label: "Leaderboard", to: "/dashboard/leaderboard", icon: Trophy, },
+      {label: "Leaderboard", to: "/leaderboard", icon: Trophy, },
     ],
   },
   {
