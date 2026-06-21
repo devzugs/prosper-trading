@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Search } from "lucide-react";
-import Accordion from "./Accordion";
-import { FAQ_DATA } from "./faqData";
+import Accordion from "../../pages/client/support/Accordion";
+import { FAQ_DATA } from "../../data/Faqdata";
 
 const FAQSection = () => {
   const [search, setSearch] = useState("");

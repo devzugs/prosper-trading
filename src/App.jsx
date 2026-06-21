@@ -11,6 +11,7 @@ import PaymentDetailsPage from './pages/client/withdraw/payment-details/PaymentD
 import Leaderboard from './pages/client/leaderboard/Leaderboard';
 import SettingsPage from './pages/client/settings/SettingsPage';
 import SupportPage from './pages/client/support/SupportPage';
+import FaqPage from './pages/public/FaqPage';
 
 
 const App = () =>{
@@ -21,6 +22,7 @@ const App = () =>{
         {/* Public Routes - Wrapped in PublicLayout */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/faq" element={<FaqPage />} />
           {/* Add more public pages here like <Route path="/about" element={<AboutPage />} /> */}
         </Route>
 
