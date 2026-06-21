@@ -53,7 +53,7 @@ export const APP_SIDEBAR_NAV = [
       },
       {
         label: "Support",
-        to: "/dashboard/support",
+        to: "/support",
         icon: HeadphonesIcon,
       },
     ],
