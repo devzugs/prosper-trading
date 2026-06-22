@@ -14,6 +14,7 @@ import SupportPage from './pages/client/support/SupportPage';
 import FaqPage from './pages/public/FaqPage';
 import MarketsPage from './pages/client/markets/MarketsPage';
 import AboutPage from './pages/public/AboutPage';
+import ContactPage from './pages/public/ContactPage.';
 
 
 const App = () =>{
@@ -26,6 +27,7 @@ const App = () =>{
           <Route path="/" element={<LandingPage />} />
           <Route path="/about-us" element={<AboutPage />} />
           <Route path="/faq" element={<FaqPage />} />
+          <Route path="/contact-us" element={<ContactPage />} />
           {/* Add more public pages here like <Route path="/about" element={<AboutPage />} /> */}
         </Route>
 
