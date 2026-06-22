@@ -13,6 +13,7 @@ import SettingsPage from './pages/client/settings/SettingsPage';
 import SupportPage from './pages/client/support/SupportPage';
 import FaqPage from './pages/public/FaqPage';
 import MarketsPage from './pages/client/markets/MarketsPage';
+import AboutPage from './pages/public/AboutPage';
 
 
 const App = () =>{
@@ -23,6 +24,7 @@ const App = () =>{
         {/* Public Routes - Wrapped in PublicLayout */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/about-us" element={<AboutPage />} />
           <Route path="/faq" element={<FaqPage />} />
           {/* Add more public pages here like <Route path="/about" element={<AboutPage />} /> */}
         </Route>
