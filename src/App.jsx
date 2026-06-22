@@ -12,6 +12,7 @@ import Leaderboard from './pages/client/leaderboard/Leaderboard';
 import SettingsPage from './pages/client/settings/SettingsPage';
 import SupportPage from './pages/client/support/SupportPage';
 import FaqPage from './pages/public/FaqPage';
+import MarketsPage from './pages/client/markets/MarketsPage';
 
 
 const App = () =>{
@@ -35,6 +36,7 @@ const App = () =>{
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/support" element={ <SupportPage />} />
+          <Route path="/markets" element={<MarketsPage />} />
         </Route>
       </Routes>
   

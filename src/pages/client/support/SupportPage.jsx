@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { HelpCircle, MessageSquare, FileText, Clock } from "lucide-react";
-import FAQSection from "./FAQSection";
+import FAQSection from "../../../components/sections/FaqSection";
 import ContactFormSection from "./ContactFormSection";
 import SupportTicketsSection from "./SupportTicketsSection";
 import LiveChatSection from "./LiveChatSection";
