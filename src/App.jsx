@@ -15,6 +15,8 @@ import FaqPage from './pages/public/FaqPage';
 import MarketsPage from './pages/client/markets/MarketsPage';
 import AboutPage from './pages/public/AboutPage';
 import ContactPage from './pages/public/ContactPage.';
+import ReferralPage from './pages/client/referral/ReferralPage';
+import WithdrawPage from './pages/client/withdraw/withdrawal/WithdrawPage';
 
 
 const App = () =>{
@@ -35,7 +37,9 @@ const App = () =>{
         <Route element={<ClientLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/transaction-history" element={<TransactionHistoryPage />} />
+          <Route path="referral" element={<ReferralPage />} />
           <Route path="/deposit" element={<DepositPage />} />
+          <Route path="/withdraw" element={<WithdrawPage />} />
           <Route path="/payment-details" element={<PaymentDetailsPage />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/settings" element={<SettingsPage />} />

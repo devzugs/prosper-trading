@@ -1,7 +1,8 @@
 import {
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine,
   CreditCard, ScrollText, Trophy, Settings, HeadphonesIcon, ChartColumn,
-  Wallet
+  Wallet,
+  Share2
 } from "lucide-react";
 
 // Public Links
@@ -19,6 +20,7 @@ export const APP_SIDEBAR_NAV = [
     items: [
       { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
       { label: "Transactions", to: "/transaction-history", icon: ScrollText },
+      { label: "Referral", to: "/referral", icon: Share2},
     ],
   },
   {
@@ -30,7 +32,7 @@ export const APP_SIDEBAR_NAV = [
         to: "/dashboard/withdraw",
         icon: ArrowUpFromLine,
         children: [
-          { label: "Withdraw", to: "/", icon: Wallet},
+          { label: "Withdraw", to: "/withdraw", icon: Wallet},
           { label: "Payment Details", to: "/payment-details", icon: CreditCard },
         ],
       },
