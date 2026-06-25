@@ -112,18 +112,20 @@ export default function MobileNavigation({ isOpen, onClose }) {
 
         {/* CTA Area */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-secondary p-6">
-          <div className="space-y-3">
-            <button
-              className="w-full rounded-xl border border-border px-5 py-3 text-sm font-medium text-text-light transition hover:border-accent hover:text-white"
+          <div className="space-y-3 text-center">
+            <Link
+              to="/login"
+              className="block w-full rounded-xl border border-border px-5 py-3 text-sm font-medium text-text-light transition hover:border-accent hover:text-white"
             >
               Login
-            </button>
+            </Link>
 
-            <button
-              className="w-full rounded-xl bg-accent px-5 py-3 text-sm font-bold text-secondary shadow-lg shadow-accent/20 transition hover:bg-accent-light"
+            <Link
+              to="/signup"
+              className="block w-full rounded-xl bg-accent px-5 py-3 text-sm font-bold text-secondary shadow-lg shadow-accent/20 transition hover:bg-accent-light"
             >
               Get Started
-            </button>
+            </Link>
           </div>
         </div>
       </nav>

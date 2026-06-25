@@ -45,13 +45,17 @@ export default function Navbar() {
 
           {/* CTA */}
           <div className="hidden lg:flex items-center gap-4">
-            <button className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-text-light transition hover:border-accent hover:text-white">
+            <Link 
+              to="/login"
+              className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-text-light transition hover:border-accent hover:text-white">
               Login
-            </button>
+            </Link>
             {/* Updated CTA */}
-            <button className="rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-secondary shadow-lg shadow-accent/20 transition hover:bg-accent-light">
+            <Link 
+              to="/signup"
+              className="rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-secondary shadow-lg shadow-accent/20 transition hover:bg-accent-light">
               Get Started
-            </button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}

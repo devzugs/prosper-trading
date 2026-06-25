@@ -17,6 +17,9 @@ import AboutPage from './pages/public/AboutPage';
 import ContactPage from './pages/public/ContactPage.';
 import ReferralPage from './pages/client/referral/ReferralPage';
 import WithdrawPage from './pages/client/withdraw/withdrawal/WithdrawPage';
+import LoginPage from './pages/public/auth/LoginPage';
+import SignupPage from './pages/public/auth/SignupPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 
 const App = () =>{
@@ -33,18 +36,24 @@ const App = () =>{
           {/* Add more public pages here like <Route path="/about" element={<AboutPage />} /> */}
         </Route>
 
-        {/* Future Client Routes - Will be wrapped in a ClientLayout/ProtectedRoute */} 
-        <Route element={<ClientLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/transaction-history" element={<TransactionHistoryPage />} />
-          <Route path="referral" element={<ReferralPage />} />
-          <Route path="/deposit" element={<DepositPage />} />
-          <Route path="/withdraw" element={<WithdrawPage />} />
-          <Route path="/payment-details" element={<PaymentDetailsPage />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/support" element={ <SupportPage />} />
-          <Route path="/markets" element={<MarketsPage />} />
+        {/* Auth Routes - intentionally outside PublicLayout/ClientLayout (own minimal layout) */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+
+        {/* Client Routes - gated by ProtectedRoute, then wrapped in ClientLayout */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<ClientLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/transaction-history" element={<TransactionHistoryPage />} />
+            <Route path="referral" element={<ReferralPage />} />
+            <Route path="/deposit" element={<DepositPage />} />
+            <Route path="/withdraw" element={<WithdrawPage />} />
+            <Route path="/payment-details" element={<PaymentDetailsPage />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/support" element={ <SupportPage />} />
+            <Route path="/markets" element={<MarketsPage />} />
+          </Route>
         </Route>
       </Routes>
   
