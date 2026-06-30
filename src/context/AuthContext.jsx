@@ -6,62 +6,80 @@ const AuthContext = createContext(undefined);
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);       // true until first session check resolves
-  const [profileLoading, setProfileLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Single source of truth for loading
 
-  // 1. Get the existing session on first load, then keep listening for changes
-  //    (sign in, sign out, token refresh all fire onAuthStateChange).
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    let mounted = true;
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  // 2. Whenever the session's user changes, fetch their profile row (for role/kyc/etc).
-  useEffect(() => {
-    const userId = session?.user?.id;
-
-    if (!userId) {
-      setProfile(null);
-      return;
-    }
-
-    setProfileLoading(true);
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single()
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Failed to load profile:", error.message);
+    const loadSessionAndProfile = async () => {
+      // 1. Get Session
+      const { data: { session: activeSession } } = await supabase.auth.getSession();
+      
+      if (!activeSession) {
+        if (mounted) {
+          setSession(null);
           setProfile(null);
-        } else {
-          setProfile(data);
+          setLoading(false);
         }
-        setProfileLoading(false);
-      });
-  }, [session?.user?.id]);
+        return;
+      }
+
+      // 2. If Session exists, fetch Profile BEFORE dropping the loading flag
+      const { data: userProfile, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", activeSession.user.id)
+        .single();
+
+      if (error) console.error("Failed to load profile:", error.message);
+
+      if (mounted) {
+        setSession(activeSession);
+        setProfile(userProfile || null);
+        setLoading(false);
+      }
+    };
+
+    loadSessionAndProfile();
+
+    // 3. Listen for future auth changes (login/logout)
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      setLoading(true); // Re-engage loading guard
+      setSession(newSession);
+      
+      if (!newSession) {
+        setProfile(null);
+        setLoading(false);
+      } else {
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", newSession.user.id)
+          .single();
+          
+        setProfile(userProfile || null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   const value = {
     session,
     user: session?.user ?? null,
     profile,
-    loading: loading || profileLoading,
+    loading,
     isAdmin: profile?.role === "admin",
 
     signUp: (email, password, metadata = {}) =>
       supabase.auth.signUp({
         email,
         password,
-        options: { data: metadata }, // becomes raw_user_meta_data, read by the DB trigger
+        options: { data: metadata },
       }),
 
     signIn: (email, password) =>
