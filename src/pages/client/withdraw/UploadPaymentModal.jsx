@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { CreditCard, Landmark, Bitcoin, X } from "lucide-react";
-import CreditCardFields from "./CreditCardFields";
-import WireTransferFields from "./WireTransferFields";
-import CryptoFields from "./CryptoFields";
+import CreditCardFields from "./payment-details/CreditCardFields";
+import WireTransferFields from "./payment-details/WireTransferFields";
+import CryptoFields from "./payment-details/CryptoFields";
 
 
 export default function UploadPaymentModal({ open, onClose, onSubmit }) {
