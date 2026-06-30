@@ -20,6 +20,8 @@ import WithdrawPage from './pages/client/withdraw/withdrawal/WithdrawPage';
 import LoginPage from './pages/public/auth/LoginPage';
 import SignupPage from './pages/public/auth/SignupPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminRoute from './components/auth/Adminroute';
+import AdminTestDashboard from './pages/admin/AdminTestDashboard';
 
 
 const App = () =>{
@@ -55,6 +57,8 @@ const App = () =>{
             <Route path="/markets" element={<MarketsPage />} />
           </Route>
         </Route>
+
+        <Route path="/admin-test" element={<AdminRoute> <AdminTestDashboard /></AdminRoute>} ></Route>
       </Routes>
   
       
