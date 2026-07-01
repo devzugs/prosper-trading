@@ -14,7 +14,7 @@ const AdminTestDashboard = () => {
     setLoading(true);
     
     // 1. Fetch Pending Deposits
-    const { data: deps } = await supabase
+    const { data: deps, error: depsError } = await supabase
       .from("deposits")
       .select(`
         id, amount, coin, network, tx_hash, proof_url, created_at,
@@ -22,6 +22,8 @@ const AdminTestDashboard = () => {
       `)
       .eq("status", "pending")
       .order("created_at", { ascending: true });
+
+    if (depsError) console.error("Failed to fetch deposits:", depsError.message);
 
     // 2. Resolve secure signed URLs for private deposit proofs
     const depositsWithImages = await Promise.all(
@@ -36,7 +38,7 @@ const AdminTestDashboard = () => {
     setDeposits(depositsWithImages);
 
     // 3. Fetch Pending Withdrawals
-    const { data: wits } = await supabase
+    const { data: wits, error: witsError } = await supabase
       .from("withdrawals")
       .select(`
         id, amount, currency, method, payment_details, created_at,
@@ -45,6 +47,7 @@ const AdminTestDashboard = () => {
       .eq("status", "pending")
       .order("created_at", { ascending: true });
 
+    if (witsError) console.error("Failed to fetch withdrawals:", witsError.message);
     setWithdrawals(wits || []);
     setLoading(false);
   };
@@ -70,21 +73,18 @@ const AdminTestDashboard = () => {
   const handleRejectDeposit = async (id) => {
     if (!window.confirm("Reject this deposit?")) return;
     setProcessingId(id);
-    
-    const { error } = await supabase
-      .from("deposits")
-      .update({ status: "rejected" })
-      .eq("id", id);
-      
-    if (error) alert("Error rejecting: " + error.message);
+
+    const { error } = await supabase.rpc("reject_deposit", { p_deposit_id: id });
+
+    if (error) alert("Error rejecting deposit: " + error.message);
     else fetchPendingQueues();
-    
+
     setProcessingId(null);
   };
 
   // --- Handlers for Withdrawals ---
   const handleApproveWithdrawal = async (id) => {
-    if (!window.confirm("Mark withdrawal as complete and deduct from locked funds?")) return;
+    if (!window.confirm("Mark withdrawal as complete and deduct this amount from the user's wallet?")) return;
     setProcessingId(id);
     
     const { error } = await supabase.rpc("approve_withdrawal", { p_withdrawal_id: id });
@@ -96,7 +96,7 @@ const AdminTestDashboard = () => {
   };
 
   const handleRejectWithdrawal = async (id) => {
-    if (!window.confirm("Reject withdrawal and refund the user's wallet?")) return;
+    if (!window.confirm("Reject this withdrawal request? The user's wallet balance is untouched — nothing was deducted at request time.")) return;
     setProcessingId(id);
     
     const { error } = await supabase.rpc("reject_withdrawal", { p_withdrawal_id: id });
@@ -213,7 +213,7 @@ const AdminTestDashboard = () => {
                       disabled={processingId === wit.id}
                       className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 py-2 rounded-lg text-sm font-bold my-transition disabled:opacity-50"
                     >
-                      <XCircle size={16} /> Reject & Refund
+                      <XCircle size={16} /> Reject
                     </button>
                   </div>
                 </div>

@@ -1,11 +1,19 @@
 // src/pages/client/withdraw/WithdrawStepMethod.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, ShieldCheck, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShieldCheck, Plus } from "lucide-react";
 
-const WithdrawStepMethod = ({ methods, onSelectMethod }) => {
+const WithdrawStepMethod = ({ methods, onSelectMethod, onBack }) => {
   return (
     <div className="animate-[fade-up_0.4s_ease_forwards]">
+      {onBack && (
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-accent my-transition">
+            <ChevronLeft size={15} /> Back
+          </button>
+        </div>
+      )}
+
       <p className="text-sm text-text-muted mb-5">
         Where would you like to receive your funds?
       </p>

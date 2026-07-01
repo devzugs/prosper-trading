@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { History, Bitcoin, Landmark, CreditCard, Loader2 } from "lucide-react";
 import WithdrawStepIndicator from "./WithdrawStepIndicator";
+import WithdrawStepCoin from "./WithdrawStepCoin";
 import WithdrawStepMethod from "./WithdrawStepMethod";
 import WithdrawStepAmount from "./WithdrawStepAmount";
 import WithdrawStepReview from "./WithdrawStepReview";
@@ -11,6 +12,7 @@ import { useAuth } from "../../../../context/AuthContext";
 const WithdrawPage = () => {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
+  const [coin, setCoin] = useState(null);
   const [method, setMethod] = useState(null);
   const [amount, setAmount] = useState(0);
   const [savedMethods, setSavedMethods] = useState([]);
@@ -52,17 +54,23 @@ const WithdrawPage = () => {
     fetchMethods();
   }, [user]);
 
+  const pickCoin = (w) => {
+    setCoin(w);
+    setStep(2);
+  };
+
   const pickMethod = (m) => {
     setMethod(m);
-    setStep(2);
+    setStep(3);
   };
 
   const confirmAmount = (amt) => {
     setAmount(amt);
-    setStep(3);
+    setStep(4);
   };
 
   const reset = () => {
+    setCoin(null);
     setMethod(null);
     setAmount(0);
     setStep(1);
@@ -85,16 +93,18 @@ const WithdrawPage = () => {
         <div className="max-w-2xl mx-auto">
           <WithdrawStepIndicator step={step} />
 
-          {step === 1 && (
+          {step === 1 && <WithdrawStepCoin onSelectCoin={pickCoin} />}
+
+          {step === 2 && (
             loading ? (
               <div className="flex justify-center p-10"><Loader2 className="animate-spin text-accent" /></div>
             ) : (
-              <WithdrawStepMethod methods={savedMethods} onSelectMethod={pickMethod} />
+              <WithdrawStepMethod methods={savedMethods} onSelectMethod={pickMethod} onBack={() => setStep(1)} />
             )
           )}
 
-          {step === 2 && <WithdrawStepAmount method={method} onBack={() => setStep(1)} onContinue={confirmAmount} />}
-          {step === 3 && <WithdrawStepReview method={method} amount={amount} onBack={() => setStep(2)} onReset={reset} />}
+          {step === 3 && <WithdrawStepAmount coin={coin} method={method} onBack={() => setStep(2)} onContinue={confirmAmount} />}
+          {step === 4 && <WithdrawStepReview coin={coin} method={method} amount={amount} onBack={() => setStep(3)} onReset={reset} />}
         </div>
       </div>
     </div>

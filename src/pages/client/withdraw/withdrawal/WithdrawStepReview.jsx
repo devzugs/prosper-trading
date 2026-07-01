@@ -6,12 +6,13 @@ import { useAuth } from "../../../../context/AuthContext";
 
 const fmt = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const WithdrawStepReview = ({ method, amount, onBack, onReset }) => {
+const WithdrawStepReview = ({ coin, method, amount, onBack, onReset }) => {
   const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
 
+  const currency = coin?.currency ?? "";
   const fee = amount * (WITHDRAWAL_FEE_PCT / 100);
   const youReceive = amount - fee;
 
@@ -19,13 +20,16 @@ const handleConfirm = async () => {
     setSubmitting(true);
     setError(null);
 
-    // method.method maps to db constraints ('crypto', 'wire', 'card')
+    // method.method maps to db constraints ('crypto', 'wire', 'card').
+    // currency is whichever wallet the user picked in step 1 — this must
+    // match the currency in the wallets row that approve_withdrawal will
+    // later check the balance against.
     const { error: dbError } = await supabase
       .from('withdrawals')
       .insert({
         user_id: user.id,
         method: method.method, 
-        currency: 'USD', 
+        currency: currency,
         amount: amount, 
         status: 'pending',
         // Capture the full raw details for the admin to execute the payment
@@ -53,7 +57,7 @@ const handleConfirm = async () => {
         </div>
         <h2 className="text-xl font-bold text-heading mb-2">Withdrawal Requested</h2>
         <p className="text-sm text-text-muted max-w-sm mb-6">
-          Your request to withdraw ${fmt(amount)} via {method.label} has been submitted and is pending admin review.
+          Your request to withdraw {fmt(amount)} {currency} via {method.label} has been submitted and is pending admin review.
         </p>
         <button onClick={onReset} className="rounded-xl bg-accent px-6 py-2.5 text-sm font-bold text-secondary shadow-lg shadow-accent/20 my-transition hover:bg-accent-light">
           Back to Withdrawals
@@ -87,15 +91,15 @@ const handleConfirm = async () => {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-text-muted">Withdrawal amount</span>
-            <span className="text-text-light font-medium">${fmt(amount)}</span>
+            <span className="text-text-light font-medium">{fmt(amount)} {currency}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-text-muted">Fee ({WITHDRAWAL_FEE_PCT}%)</span>
-            <span className="text-danger font-medium">-${fmt(fee)}</span>
+            <span className="text-danger font-medium">-{fmt(fee)} {currency}</span>
           </div>
           <div className="flex items-center justify-between text-sm pt-2 border-t border-border/60">
             <span className="text-heading font-semibold">You'll receive</span>
-            <span className="text-success font-bold">${fmt(youReceive)}</span>
+            <span className="text-success font-bold">{fmt(youReceive)} {currency}</span>
           </div>
         </div>
       </div>
