@@ -1,14 +1,19 @@
-// src/pages/client/referral/ReferredUsersTable.jsx
 import React from "react";
 import { Users } from "lucide-react";
-import { REFERRED_USERS, STATUS_META } from "./referralData";
 
-const fmt = (n) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmt = (n) => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-const ReferredUsersTable = () => {
-  const isEmpty = REFERRED_USERS.length === 0;
+// Missing Configuration injected here
+const STATUS_META = {
+  active:  { label: "Active",  className: "bg-success/10 text-success" },
+  pending: { label: "Pending", className: "bg-warning/10 text-warning" },
+  inactive:{ label: "Inactive",className: "bg-danger/10 text-danger" }
+};
+
+const ReferredUsersTable = ({ users = [] }) => {
+  const isEmpty = users.length === 0;
 
   return (
     <div>
@@ -16,7 +21,7 @@ const ReferredUsersTable = () => {
         <h2 className="text-xl sm:text-2xl font-bold text-heading">Your Referrals</h2>
         {!isEmpty && (
           <p className="text-xs text-text-muted">
-            {REFERRED_USERS.length} referral{REFERRED_USERS.length !== 1 ? "s" : ""}
+            {users.length} referral{users.length !== 1 ? "s" : ""}
           </p>
         )}
       </div>
@@ -51,8 +56,9 @@ const ReferredUsersTable = () => {
                 </tr>
               </thead>
               <tbody>
-                {REFERRED_USERS.map((u, i) => {
-                  const statusCfg = STATUS_META[u.status];
+                {users.map((u, i) => {
+                  // Fallback safely if status is missing
+                  const statusCfg = STATUS_META[u.status] || STATUS_META.pending;
                   return (
                     <tr
                       key={u.id}
@@ -92,10 +98,10 @@ const ReferredUsersTable = () => {
             </table>
           </div>
 
-          {/* Mobile cards */}
+          {/* Mobile cards (Fixed _users bug) */}
           <div className="flex flex-col divide-y divide-border/50 md:hidden">
-            {REFERRED_USERS.map((u) => {
-              const statusCfg = STATUS_META[u.status];
+            {users.map((u) => {
+              const statusCfg = STATUS_META[u.status] || STATUS_META.pending;
               return (
                 <div key={u.id} className="flex items-center gap-4 p-4">
                   <div className="w-9 h-9 rounded-full bg-accent/10 text-accent flex items-center justify-center text-xs font-bold shrink-0">
