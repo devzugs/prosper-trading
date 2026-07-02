@@ -1,36 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, AlertCircle, Info, Loader2 } from "lucide-react";
-import { MIN_WITHDRAWAL, WITHDRAWAL_FEE_PCT } from "./withdrawData";
-import { supabase } from "../../../../lib/supabaseClient";
-import { useAuth } from "../../../../context/AuthContext";
+import React, { useState } from "react";
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { getMinWithdrawal, WITHDRAWAL_FEE_PCT } from "./withdrawData";
 
-const fmt = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (n) =>
+  Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 });
 
-const WithdrawStepAmount = ({ method, onBack, onContinue }) => {
-  const { user } = useAuth();
+// The available balance for this step comes from the wallet the user just
+// picked in WithdrawStepCoin (coin.cached_balance) — no need to re-fetch it
+// here, and no assumption that the currency is USD. `coin.currency` is
+// whatever the user is withdrawing (e.g. "Bitcoin", "USD", "Tether") and
+// must match the exact string stored in wallets.currency, since that's what
+// determines both the minimum withdrawal here and the balance check the
+// server runs later in approve_withdrawal.
+const WithdrawStepAmount = ({ coin, method, onBack, onContinue }) => {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
-  const [availableBalance, setAvailableBalance] = useState(0);
-  const [loadingBalance, setLoadingBalance] = useState(true);
 
-  // 1. Fetch Real Balance
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (!user) return;
-      const { data, error } = await supabase
-        .from("wallets")
-        .select("cached_balance")
-        .eq("user_id", user.id);
-
-      if (!error && data) {
-        // Summing all wallets (e.g., USD + BTC values)
-        const total = data.reduce((sum, wallet) => sum + Number(wallet.cached_balance), 0);
-        setAvailableBalance(total);
-      }
-      setLoadingBalance(false);
-    };
-    fetchBalance();
-  }, [user]);
+  const availableBalance = Number(coin?.cached_balance ?? 0);
+  const currency = coin?.currency ?? "";
+  const minWithdrawal = getMinWithdrawal(currency);
 
   const numeric = parseFloat(value) || 0;
   const fee = numeric * (WITHDRAWAL_FEE_PCT / 100);
@@ -43,14 +31,14 @@ const WithdrawStepAmount = ({ method, onBack, onContinue }) => {
   };
 
   const handleMax = () => {
-    setValue(availableBalance.toFixed(2));
+    setValue(String(availableBalance));
     setError("");
   };
 
   const handleContinue = () => {
     if (!value || numeric <= 0) return setError("Please enter an amount to withdraw.");
-    if (numeric < MIN_WITHDRAWAL) return setError(`Minimum withdrawal is $${MIN_WITHDRAWAL}.`);
-    if (numeric > availableBalance) return setError("Amount exceeds your available database balance.");
+    if (numeric < minWithdrawal) return setError(`Minimum withdrawal is ${fmt(minWithdrawal)} ${currency}.`);
+    if (numeric > availableBalance) return setError(`Amount exceeds your available ${currency} balance.`);
     onContinue(numeric);
   };
 
@@ -62,41 +50,59 @@ const WithdrawStepAmount = ({ method, onBack, onContinue }) => {
           <ChevronLeft size={15} /> Back
         </button>
         <span className="text-border">|</span>
-        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md ${method.bg}`}>
-          {React.createElement(method.icon, { size: 13, className: method.accent })}
-          <span className={`text-xs font-semibold ${method.accent}`}>{method.label}</span>
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-accent/10">
+          <span className="text-xs font-semibold text-accent">{currency}</span>
         </div>
+        {method && (
+          <>
+            <span className="text-border">|</span>
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md ${method.bg}`}>
+              {method.icon && React.createElement(method.icon, { size: 13, className: method.accent })}
+              <span className={`text-xs font-semibold ${method.accent}`}>{method.label}</span>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="bg-surface-alt rounded-xl border border-border p-5 mb-4">
         <div className="flex items-center justify-between mb-4">
           <label className="text-sm font-semibold text-heading">Amount to withdraw</label>
           <p className="text-xs text-text-muted flex items-center gap-2">
-            Available: 
-            {loadingBalance ? <Loader2 size={12} className="animate-spin text-accent" /> : <span className="text-text-light font-medium">${fmt(availableBalance)}</span>}
+            Available:{" "}
+            <span className="text-text-light font-medium">{fmt(availableBalance)} {currency}</span>
           </p>
         </div>
 
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-lg font-semibold">$</span>
           <input
             type="text"
             inputMode="decimal"
             value={value}
             onChange={handleChange}
             placeholder="0.00"
-            disabled={loadingBalance}
-            className="w-full rounded-md border border-border bg-surface px-8 py-3.5 text-xl font-bold text-heading outline-none my-transition focus:border-accent disabled:opacity-50"
+            className="w-full rounded-md border border-border bg-surface px-4 py-3.5 text-xl font-bold text-heading outline-none my-transition focus:border-accent"
           />
+          <span className="absolute right-20 top-1/2 -translate-y-1/2 text-text-muted text-sm font-semibold">
+            {currency}
+          </span>
           <button
             type="button"
             onClick={handleMax}
-            disabled={loadingBalance}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/20 my-transition disabled:opacity-50"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/20 my-transition"
           >
             MAX
           </button>
         </div>
+
+        <p className="text-xs text-text-muted mt-2">
+          Minimum withdrawal: {fmt(minWithdrawal)} {currency}
+        </p>
+
+        {numeric > 0 && (
+          <p className="text-xs text-text-muted mt-1">
+            Fee ({WITHDRAWAL_FEE_PCT}%): {fmt(fee)} {currency} — you'll receive {fmt(youReceive)} {currency}
+          </p>
+        )}
 
         {error && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2">
@@ -108,8 +114,7 @@ const WithdrawStepAmount = ({ method, onBack, onContinue }) => {
 
       <button
         onClick={handleContinue}
-        disabled={loadingBalance}
-        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-light text-secondary font-bold text-sm py-3 rounded-xl my-transition disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-light text-secondary font-bold text-sm py-3 rounded-xl my-transition"
       >
         Continue <ChevronRight size={15} />
       </button>
