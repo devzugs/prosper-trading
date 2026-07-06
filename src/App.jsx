@@ -21,7 +21,12 @@ import LoginPage from './pages/public/auth/LoginPage';
 import SignupPage from './pages/public/auth/SignupPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/Adminroute';
-import AdminTestDashboard from './pages/admin/AdminTestDashboard';
+import AdminLayout from './layouts/AdminLayout';
+import AdminOverview from './pages/admin/AdminOverview';
+import AdminApprovals from './pages/admin/AdminApprovals';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminReferrals from './pages/admin/AdminReferrals';
+import AdminAuditLog from './pages/admin/AdminAuditLog';
 
 
 const App = () =>{
@@ -58,7 +63,15 @@ const App = () =>{
           </Route>
         </Route>
 
-        <Route path="/admin-test" element={<AdminRoute> <AdminTestDashboard /></AdminRoute>} ></Route>
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminOverview />} />
+            <Route path="approvals" element={<AdminApprovals />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="referrals" element={<AdminReferrals />} />
+            <Route path="audit-log" element={<AdminAuditLog />} />
+          </Route>
+        </Route>
       </Routes>
   
       

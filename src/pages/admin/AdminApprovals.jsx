@@ -3,7 +3,7 @@ import { CheckCircle, XCircle, Eye, Loader2, RefreshCcw, DollarSign, UploadCloud
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 
-const AdminTestDashboard = () => {
+const AdminApprovals = () => {
   const { user } = useAuth();
   const [deposits, setDeposits] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
@@ -108,10 +108,10 @@ const AdminTestDashboard = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto min-h-screen space-y-8 animate-[fade-in_0.4s_ease_out]">
+    <div className="space-y-8">
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-heading">Admin Command Center</h1>
+          <h2 className="text-lg font-bold text-heading">Pending Approvals</h2>
           <p className="text-sm text-text-muted mt-1">Review and process pending financial transactions.</p>
         </div>
         <button onClick={fetchPendingQueues} className="p-2 rounded-lg bg-surface-alt border border-border hover:text-accent my-transition">
@@ -227,4 +227,4 @@ const AdminTestDashboard = () => {
   );
 };
 
-export default AdminTestDashboard;
+export default AdminApprovals;
