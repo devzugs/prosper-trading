@@ -62,19 +62,3 @@ create policy "deposit_proofs_delete_own_or_admin"
 -- never edited in place.
 
 
--- ---------------------------------------------------------------------------
--- SELF-TEST: run as a logged-in non-admin user (anon key, not service_role)
--- ---------------------------------------------------------------------------
--- Test 1: Upload into your own folder — should succeed
---   supabase.storage.from('deposit-proofs').upload(`${auth.uid()}/test.png`, file)
---
--- Test 2: Upload into someone else's folder — should fail
---   supabase.storage.from('deposit-proofs').upload('<other-uuid>/test.png', file)
---
--- Test 3: Read your own proof — should succeed (via signed URL or direct select)
---   supabase.storage.from('deposit-proofs').createSignedUrl(`${auth.uid()}/test.png`, 60)
---
--- Test 4: Read someone else's proof — should fail for a non-admin
---
--- Test 5: Upload a >5MB file or a non-image mimetype — should be rejected by
---   Storage itself now, even if a client bypasses the 5MB/accept="image/*" checks.
