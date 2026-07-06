@@ -1,10 +1,16 @@
 // src/pages/client/referral/ReferralTiers.jsx
 import React from "react";
 import { Check } from "lucide-react";
-import { REFERRAL_TIERS, REFERRAL_STATS } from "./referralData";
+import { REFERRAL_TIERS } from "./referralData";
 
-const ReferralTiers = () => {
-  const currentIndex = REFERRAL_TIERS.findIndex((t) => t.id === REFERRAL_STATS.currentTier);
+const ReferralTiers = ({ activeReferrals = 0 }) => {
+  // Current tier = highest tier whose minReferrals the user has met.
+  const currentIndex = REFERRAL_TIERS.reduce(
+    (best, tier, i) => (activeReferrals >= tier.minReferrals ? i : best),
+    0
+  );
+  const nextTier = REFERRAL_TIERS[currentIndex + 1];
+  const referralsToNextTier = nextTier ? Math.max(nextTier.minReferrals - activeReferrals, 0) : 0;
 
   return (
     <div className="h-full flex flex-col">
@@ -12,7 +18,13 @@ const ReferralTiers = () => {
       <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
         <h2 className="text-xl sm:text-2xl font-bold text-heading">Commission Tiers</h2>
         <p className="text-sm text-text-muted">
-          Refer <span className="text-accent font-semibold">{REFERRAL_STATS.referralsToNextTier} more</span> to reach the next tier.
+          {nextTier ? (
+            <>
+              Refer <span className="text-accent font-semibold">{referralsToNextTier} more</span> to reach the next tier.
+            </>
+          ) : (
+            <span className="text-accent font-semibold">You've reached the highest tier.</span>
+          )}
         </p>
       </div>
 
@@ -51,7 +63,7 @@ const ReferralTiers = () => {
                     Current
                   </span>
                 )}
-                
+
                 {isUnlocked && !isCurrent && (
                   <span className="text-success bg-success/10 border border-success/20 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
                     <Check size={12} strokeWidth={3} />
@@ -63,7 +75,7 @@ const ReferralTiers = () => {
               {/* Content */}
               <div className="relative z-10 flex-1 flex flex-col">
                 <h3 className="text-text-light text-sm font-medium mb-1">{tier.name}</h3>
-                
+
                 <div className="flex items-baseline gap-2 mb-4">
                   <span className={`text-2xl font-bold tracking-tight ${tier.color}`}>
                     {tier.commission}%

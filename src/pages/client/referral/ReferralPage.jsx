@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 const ReferralPage = () => {
   const { user, profile } = useAuth();
   const [referredUsers, setReferredUsers] = useState([]);
-  const [stats, setStats] = useState({ totalEarned: 0, activeReferrals: 0, pendingPayouts: 0 });
+  const [stats, setStats] = useState({ totalReferrals: 0, totalEarned: 0, activeReferrals: 0, pendingPayouts: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,17 +60,24 @@ const ReferralPage = () => {
 
       const { data: txs } = await supabase
         .from('transactions')
-        .select('amount')
+        .select('amount, status')
         .eq('user_id', user.id)
         .eq('type', 'referral_bonus')
-        .eq('status', 'completed');
+        .in('status', ['completed', 'pending']);
 
-      const totalEarned = (txs || []).reduce((sum, t) => sum + Number(t.amount), 0);
+      const totalEarned = (txs || [])
+        .filter(t => t.status === 'completed')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      const pendingPayouts = (txs || [])
+        .filter(t => t.status === 'pending')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
 
       setStats({
+        totalReferrals: combinedUsers.length,
         totalEarned,
         activeReferrals: combinedUsers.filter(u => u.status === 'active').length,
-        pendingPayouts: 0 // Fetch pending commissions if tracked separately
+        pendingPayouts
       });
       
       setLoading(false);
