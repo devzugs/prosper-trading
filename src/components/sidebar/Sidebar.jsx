@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { APP_SIDEBAR_NAV } from "../../config/navigation";
 import NavItem from "./NavItem";
 import UserFooter from "./UserFooter";

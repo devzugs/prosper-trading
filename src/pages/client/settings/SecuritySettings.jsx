@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, Check, Smartphone, Monitor, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Check, Smartphone, Monitor } from "lucide-react";
 import SettingsCard from "./SettingsCard";
 import Toggle from "./Toggle";
 
@@ -38,7 +38,6 @@ const SecuritySettings = () => {
   const [pwdSaved, setPwdSaved] = useState(false);
   const [pwdError, setPwdError] = useState("");
 
-  const [twoFA, setTwoFA] = useState(false);
   const [loginAlerts, setLoginAlerts] = useState(true);
   const [sessions, setSessions] = useState(SESSIONS);
 

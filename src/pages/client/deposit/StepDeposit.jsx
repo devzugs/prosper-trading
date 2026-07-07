@@ -1,14 +1,11 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, X, UploadCloud, CheckCircle, Loader2 } from "lucide-react";
 import CopyBtn from "./CopyBtn"; // Assuming you have this
-import ProviderButtons from "./ProviderButtons"; // Assuming you have this
 import { supabase } from "../../../lib/supabaseClient"; 
 import { useAuth } from "../../../context/AuthContext";
 
 const StepDeposit = ({ activeMethod, selectedCoin, onBack, onReset }) => {
     const { user } = useAuth();
-    const [logoErrors, setLogoErrors] = useState({});
-    const providerCfg = activeMethod?.provider ? ProviderButtons[activeMethod.provider] : null;
 
     // --- New State for Phase 6 ---
     const [amount, setAmount] = useState("");

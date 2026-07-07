@@ -37,7 +37,7 @@ export default function LoginPage() {
       setSubmitting(true);
       
       // Call your actual authentication logic
-      const { data, error: authError } = await signIn(formData.email, formData.password);
+      const { error: authError } = await signIn(formData.email, formData.password);
 
       if (authError) {
         setError(authError.message || "Invalid login credentials. Please try again.");
@@ -47,7 +47,7 @@ export default function LoginPage() {
       // Successful login! Redirect to the dashboard
       navigate("/dashboard", { replace: true });
       
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred. Please try again later.");
     } finally {
       setSubmitting(false);

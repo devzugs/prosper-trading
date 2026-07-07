@@ -7,7 +7,7 @@ const FAQSection = () => {
   const [search, setSearch] = useState("");
 
   // Filter FAQ items by search query
-  const filtered = Object.entries(FAQ_DATA).reduce((acc, [key, { title, items }]) => {
+  const filtered = Object.values(FAQ_DATA).reduce((acc, { title, items }) => {
     const matches = items.filter(
       (item) =>
         item.question.toLowerCase().includes(search.toLowerCase()) ||
@@ -51,7 +51,7 @@ const FAQSection = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {(filtered.length > 0 ? filtered : Object.entries(FAQ_DATA).map(([_, { title, items }]) => ({ title, items }))).map(
+          {(filtered.length > 0 ? filtered : Object.values(FAQ_DATA).map(({ title, items }) => ({ title, items }))).map(
             ({ title, items }) => (
               <div key={title}>
                 <h3 className="text-base font-semibold text-heading mb-3">{title}</h3>

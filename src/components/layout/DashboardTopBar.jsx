@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Menu,
@@ -6,7 +6,6 @@ import {
   Search,
   Plus,
   ChevronDown,
-  Clock3,
   ShieldCheck,
 } from "lucide-react";
 
@@ -26,17 +25,8 @@ const DashboardTopBar = ({
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [time, setTime] = useState(new Date());
 
   const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length;
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const initials =
     user?.name

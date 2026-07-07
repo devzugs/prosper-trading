@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Eye, Loader2, RefreshCcw, DollarSign, UploadCloud } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
-import { useAuth } from "../../context/AuthContext";
 
 const AdminApprovals = () => {
-  const { user } = useAuth();
   const [deposits, setDeposits] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);

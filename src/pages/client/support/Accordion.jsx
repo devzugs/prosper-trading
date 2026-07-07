@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 // ── Collapsible accordion item ─────────────────────────────────────────────────
-const AccordionItem = ({ id, question, answer, defaultOpen = false }) => {
+const AccordionItem = ({ question, answer, defaultOpen = false }) => {
   const [open, setOpen] = useState(defaultOpen);
 
   return (

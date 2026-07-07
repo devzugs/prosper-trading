@@ -44,7 +44,7 @@ const Leaderboard = () => {
 
   // Top 3 from unfiltered ranked list (global podium)
   const podium = ranked.slice(0, 3);
-  const podiumIds = new Set(podium.map(inv => inv.id));
+  const podiumIds = useMemo(() => new Set(podium.map(inv => inv.id)), [podium]);
 
   // Apply plan + search filters after ranking so rank numbers stay consistent.
   const filtered = useMemo(() => {
@@ -59,7 +59,7 @@ const Leaderboard = () => {
       rows = rows.filter(inv => !podiumIds.has(inv.id));
     }
     return rows;
-  }, [ranked, planFilter, search, isDesktop]); // Added isDesktop as a dependency
+  }, [ranked, planFilter, search, isDesktop, podiumIds]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -205,7 +205,7 @@ const Leaderboard = () => {
                 No investors match your filters.
               </p>
             ) : (
-              paginated.map((investor, i) => {
+              paginated.map((investor) => {
                 const globalRank = ranked.findIndex(r => r.id === investor.id) + 1;
                 const planMeta   = PLAN_META_IMPORT[investor.plan];
                 const profit     = investor.profits[period];

@@ -1,7 +1,6 @@
 import React from "react";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
-import NOTIFICATIONS from "../../data/notification";
 import useClickOutside from "../../hooks/UseClickOutside";
 import { CircleUserRound, Settings, LogOut } from "lucide-react";
 
