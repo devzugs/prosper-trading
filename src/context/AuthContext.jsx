@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { isSupabaseConfigured, supabase } from "../lib/supabaseClient";
 
 const AuthContext = createContext(undefined);
 
@@ -10,6 +10,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
+
+    if (!isSupabaseConfigured) {
+      setSession(null);
+      setProfile(null);
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
 
     const loadSessionAndProfile = async () => {
       // 1. Get Session
@@ -75,17 +84,20 @@ export function AuthProvider({ children }) {
     loading,
     isAdmin: profile?.role === "admin",
 
+    isSupabaseConfigured,
+
     signUp: (email, password, metadata = {}) =>
-      supabase.auth.signUp({
+      supabase?.auth.signUp({
         email,
         password,
         options: { data: metadata },
-      }),
+      }) ?? Promise.resolve({ data: null, error: new Error("Supabase is not configured.") }),
 
     signIn: (email, password) =>
-      supabase.auth.signInWithPassword({ email, password }),
+      supabase?.auth.signInWithPassword({ email, password }) ??
+      Promise.resolve({ data: null, error: new Error("Supabase is not configured.") }),
 
-    signOut: () => supabase.auth.signOut(),
+    signOut: () => supabase?.auth.signOut() ?? Promise.resolve({ error: null }),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
