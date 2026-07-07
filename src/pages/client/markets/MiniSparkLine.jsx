@@ -1,4 +1,4 @@
-const MiniSparkline = ({ prices = [], positive = true }) => {
+const MiniSparkLine = ({ prices = [], positive = true }) => {
   if (!prices || prices.length < 2) return <div className="w-24 h-8" />;
 
   const min = Math.min(...prices);
@@ -27,4 +27,4 @@ const MiniSparkline = ({ prices = [], positive = true }) => {
   );
 };
 
-export default MiniSparkline;
+export default MiniSparkLine;

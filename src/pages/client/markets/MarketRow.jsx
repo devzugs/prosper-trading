@@ -90,7 +90,7 @@ const MarketRow = ({ coin, rank, index, isFavorite, onToggleFavorite }) => {
 
       {/* Sparkline */}
       <td className="px-5 py-4 hidden lg:table-cell">
-        <MiniSparkline prices={sparkline} positive={trendPositive} />
+        <MiniSparkLine prices={sparkline} positive={trendPositive} />
       </td>
     </tr>
   );

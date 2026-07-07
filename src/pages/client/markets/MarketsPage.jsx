@@ -234,7 +234,7 @@ const MarketsPage = () => {
                       <p className="text-sm font-semibold text-heading truncate">{coin.name}</p>
                       <p className="text-xs text-text-muted uppercase">{coin.symbol}</p>
                     </div>
-                    <MiniSparkline prices={coin.sparkline_in_7d?.price ?? []} positive={positive} />
+                    <MiniSparkLine prices={coin.sparkline_in_7d?.price ?? []} positive={positive} />
                     <div className="text-right shrink-0 w-20">
                       <p className="text-sm font-bold text-heading">{formatPrice(coin.current_price)}</p>
                       <p className={`text-xs font-semibold flex items-center justify-end gap-0.5 ${positive ? "text-success" : "text-danger"}`}>
