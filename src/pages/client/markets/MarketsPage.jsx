@@ -14,7 +14,7 @@ import MarketStats from "./MarketStats";
 import TopMovers from "./TopMovers";
 import MarketFilterBar from "./MarketFilterBar";
 import MarketRow from "./MarketRow";
-import MiniSparkline from "./MiniSparkline";
+import MiniSparkLine from "./MiniSparkLine";
 
 const PAGE_SIZE = 15;
 

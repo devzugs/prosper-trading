@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Portfolio from "./dashboard/portfolio";
+import Portfolio from "./dashboard/Portfolio";
 import LiveMarket from "./dashboard/LiveMarket";
 import QuickLinks from "./dashboard/QuickLinks";
 import TradingChart from "./dashboard/TradingCharts";

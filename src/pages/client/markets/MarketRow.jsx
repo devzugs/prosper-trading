@@ -1,5 +1,5 @@
 import { TrendingUp, TrendingDown, Star } from "lucide-react";
-import MiniSparkline from "./MiniSparkline";
+import MiniSparkLine from "./MiniSparkLine";
 
 const formatPrice = (p) => {
   if (p == null) return "—";
