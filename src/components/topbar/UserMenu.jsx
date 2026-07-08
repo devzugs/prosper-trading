@@ -1,16 +1,28 @@
-import React from "react";
-import { useRef } from "react";
-import { Link } from "react-router-dom";
+import React, { useRef } from "react";
+import { Link, useNavigate } from "react-router-dom"; 
 import useClickOutside from "../../hooks/UseClickOutside";
 import { CircleUserRound, Settings, LogOut } from "lucide-react";
 import UserIdentity from "../user/UserIdentity";
+import { useAuth } from "../../context/AuthContext";
 
-// ── User menu dropdown ────────────────────────────────────────────────────
 const UserMenu = ({ open, onClose }) => {
   const ref = useRef(null);
   useClickOutside(ref, onClose);
+  
+  const { signOut } = useAuth();
+  const navigate = useNavigate(); 
 
   if (!open) return null;
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      onClose();
+      navigate("/"); 
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   return (
     <div
@@ -45,7 +57,9 @@ const UserMenu = ({ open, onClose }) => {
 
       <div className="border-t border-white/5 py-1">
         <button 
-          className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-danger transition hover:bg-danger/5">
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-danger transition hover:bg-danger/5"
+        >
           <LogOut size={15} />
           Sign out
         </button>
