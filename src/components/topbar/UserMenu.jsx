@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { Link } from "react-router-dom";
 import useClickOutside from "../../hooks/UseClickOutside";
 import { CircleUserRound, Settings, LogOut } from "lucide-react";
+import UserIdentity from "../user/UserIdentity";
 
 // ── User menu dropdown ────────────────────────────────────────────────────
 const UserMenu = ({ open, onClose }) => {
@@ -18,7 +19,9 @@ const UserMenu = ({ open, onClose }) => {
     >
       {/* Identity */}
       <div className="border-b border-white/5 px-4 py-3">
-        <p className="text-sm font-semibold text-white">M. Anderson</p>
+        <p className="text-sm font-semibold text-white">
+          <UserIdentity />
+        </p>
         <p className="text-xs text-text-muted mt-0.5">Growth Plan · Active</p>
       </div>
 

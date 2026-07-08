@@ -25,12 +25,12 @@ export const getMinWithdrawal = (currency) =>
 
 export const WITHDRAWAL_FEE_PCT = 1.5; // %
 
-export const SAVED_METHODS = [
+export const getSavedMethods = (fullName) => [
   {
     id: "card-1",
     type: "card",
     label: "Visa •••• 4821",
-    detail: "Michael Anderson",
+    detail: fullName,
     icon: CreditCard,
     accent: "text-accent",
     bg: "bg-accent/10",

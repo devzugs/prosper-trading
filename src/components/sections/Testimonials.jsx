@@ -1,5 +1,6 @@
 import React from "react";
 import { Quote } from "lucide-react";
+import UserIdentity from "../user/UserIdentity";
 
 const Testimonials = () => {
   return (
@@ -37,7 +38,7 @@ const Testimonials = () => {
 
             <div className="mt-10">
               <h4 className="font-semibold text-lg">
-                Michael Anderson
+                <UserIdentity />
               </h4>
 
               <p className="text-text-light">

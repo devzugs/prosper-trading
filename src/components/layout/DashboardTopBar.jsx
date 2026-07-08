@@ -13,28 +13,18 @@ import NOTIFICATIONS from "../../data/notification";
 import MobileSearchOverlay from "../topbar/MobileSearchOverlay";
 import NotificationPanel from "../topbar/NotificationPanel";
 import UserMenu from "../topbar/UserMenu";
+import UserIdentity from "../user/UserIdentity";
 
 const DashboardTopBar = ({
   title = "Overview",
   onOpenMobileMenu,
-  user = {
-    name: "Michael Anderson",
-    verified: true,
-  },
+  user = { verified: true },
 }) => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length;
-
-  const initials =
-    user?.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "U";
 
   return (
     <>
@@ -189,7 +179,9 @@ const DashboardTopBar = ({
                 "
                 aria-label="User menu"
               >
-                <div
+                <UserIdentity
+                  variant="avatar"
+                  name={user?.name}
                   className="
                     flex h-9 w-9
                     items-center justify-center
@@ -198,13 +190,11 @@ const DashboardTopBar = ({
                     text-xs font-bold
                     text-accent
                   "
-                >
-                  {initials}
-                </div>
+                />
 
                 <div className="hidden lg:flex flex-col text-left">
                   <span className="text-sm font-medium text-white">
-                    {user.name}
+                    <UserIdentity name={user?.name} />
                   </span>
 
                   {user.verified && (

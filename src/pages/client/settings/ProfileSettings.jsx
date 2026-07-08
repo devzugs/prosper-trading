@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Camera, Trash2, Check } from "lucide-react";
+import { useAuth } from "../../../context/AuthContext";
+import UserIdentity, { getUserFullName } from "../../../components/user/UserIdentity";
 import SettingsCard from "./SettingsCard";
 
 const COUNTRIES = [
@@ -8,23 +10,17 @@ const COUNTRIES = [
 ];
 
 const ProfileSettings = () => {
+  const { profile, user } = useAuth();
+  const currentFullName = getUserFullName({ profile, user });
   const [form, setForm] = useState({
-    fullName: "Michael Anderson",
-    email: "michael.anderson@example.com",
+    fullName: currentFullName,
+    email: user?.email || "",
     phone: "+44 7700 900123",
     country: "United Kingdom",
     bio: "",
   });
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [saved, setSaved] = useState(false);
-
-  const initials = form.fullName
-    .split(" ")
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   const update = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
 
@@ -46,17 +42,17 @@ const ProfileSettings = () => {
     <form onSubmit={handleSave} className="space-y-6">
       <SettingsCard title="Profile Photo" description="This is displayed on your account and to support staff.">
         <div className="flex items-center gap-5">
-          {avatarPreview ? (
-            <img
-              src={avatarPreview}
-              alt="Avatar preview"
-              className="w-20 h-20 rounded-full object-cover shrink-0 border border-border"
-            />
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-accent/15 text-accent flex items-center justify-center text-2xl font-bold shrink-0">
-              {initials || "U"}
-            </div>
-          )}
+          <UserIdentity
+            variant="avatar"
+            name={form.fullName}
+            avatarSrc={avatarPreview}
+            imageAlt="Avatar preview"
+            className={
+              avatarPreview
+                ? "w-20 h-20 rounded-full object-cover shrink-0 border border-border"
+                : "w-20 h-20 rounded-full bg-accent/15 text-accent flex items-center justify-center text-2xl font-bold shrink-0"
+            }
+          />
 
           <div className="flex flex-col sm:flex-row gap-2">
             <label className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-light cursor-pointer hover:border-accent hover:text-white my-transition">
