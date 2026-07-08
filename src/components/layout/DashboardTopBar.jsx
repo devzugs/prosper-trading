@@ -94,7 +94,7 @@ const DashboardTopBar = ({
 
             {/* Deposit CTA */}
             <Link
-              to="/dashboard/deposit"
+              to="/deposit"
               className="
                 hidden sm:inline-flex
                 items-center gap-2
