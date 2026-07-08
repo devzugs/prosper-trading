@@ -1,3 +1,4 @@
+// src/pages/client/referral/ReferralPage.jsx
 import React, { useState, useEffect } from "react";
 import ReferralStats from "./ReferralStats";
 import ReferralLinkCard from "./ReferralLinkCard";
@@ -41,7 +42,6 @@ const ReferralPage = () => {
         profilesMap = (profiles || []).reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
       }
 
-      // Aligning this payload exactly with ReferredUsersTable expectations
       const combinedUsers = refs.map(r => {
         const name = profilesMap[r.referred_id]?.full_name || "Unknown User";
         return {
@@ -49,9 +49,9 @@ const ReferralPage = () => {
           name: name,
           initials: name.substring(0, 2).toUpperCase(),
           status: r.status || 'pending',
-          plan: 'Standard', // Expand this logic when you add investment plans
+          plan: 'Standard', 
           joinedDate: r.created_at,
-          totalDeposited: 0, // Placeholder until deposit ledger joining is implemented
+          totalDeposited: 0, 
           commissionEarned: r.commission_amount || 0
         };
       });
@@ -99,15 +99,11 @@ const ReferralPage = () => {
         ) : (
           <>
             <ReferralStats stats={stats} />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Pass the new short code instead of UUID */}
-              <div className="lg:col-span-2">
-                <ReferralLinkCard referralCode={profile?.referral_code} />
-              </div>
-              <div className="lg:col-span-1">
-                <ReferralTiers activeReferrals={stats.activeReferrals} />
-              </div>
+            <div className="flex flex-col gap-6">
+              <ReferralLinkCard referralCode={profile?.referral_code} />
+              <ReferralTiers activeReferrals={stats.activeReferrals} />
             </div>
+
             <ReferredUsersTable users={referredUsers} />
           </>
         )}
