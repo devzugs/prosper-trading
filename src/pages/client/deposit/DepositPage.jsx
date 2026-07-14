@@ -4,12 +4,14 @@ import { History } from "lucide-react";
 import StepIndicator from "./StepIndicator";
 import StepMethod from "./StepMethod";
 import StepCoin from "./StepCoin";
-import StepDeposit from "./StepDeposit";
+import StepPayment from "./StepPayment"; 
+import StepVerify from "./StepVerify";   
 
 const DepositPage = () => {
     const [step, setStep] = useState(1);
     const [activeMethod, setMethod] = useState(null);
     const [selectedCoin, setCoin] = useState(null);
+    const [amount, setAmount] = useState(""); 
 
     const pickMethod = (method) => {
         setMethod(method);
@@ -25,12 +27,12 @@ const DepositPage = () => {
     const reset = () => {
         setMethod(null);
         setCoin(null);
+        setAmount("");
         setStep(1);
     };
 
     return (
         <div className="min-h-screen">
-            {/* ── Page header ── */}
             <div className="p-6 pb-0 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-heading">Deposit</h1>
@@ -46,7 +48,6 @@ const DepositPage = () => {
                 </Link>
             </div>
 
-            {/* ── Content container ── */}
             <div className="p-6">
                 <div className="max-w-2xl mx-auto">
                     <StepIndicator step={step} />
@@ -62,10 +63,22 @@ const DepositPage = () => {
                     )}
                     
                     {step === 3 && (
-                        <StepDeposit 
+                        <StepPayment 
+                            activeMethod={activeMethod} 
+                            selectedCoin={selectedCoin}
+                            amount={amount}
+                            setAmount={setAmount}
+                            onBack={() => setStep(2)} 
+                            onNext={() => setStep(4)} 
+                        />
+                    )}
+
+                    {step === 4 && (
+                        <StepVerify 
                             activeMethod={activeMethod} 
                             selectedCoin={selectedCoin} 
-                            onBack={() => setStep(2)} 
+                            amount={amount}
+                            onBack={() => setStep(3)} 
                             onReset={reset} 
                         />
                     )}

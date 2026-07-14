@@ -12,7 +12,7 @@ const StepDot = ({ n, active, done }) => (
 );
 
 const StepIndicator = ({ step }) => {
-    const steps = ["Method", "Select Coin", "Deposit"];
+    const steps = ["Method", "Select Asset", "Payment", "Verify"];
     
     return (
         <div className="flex items-center gap-2 mb-8">
