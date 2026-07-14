@@ -51,6 +51,7 @@ function WireTransferFields({ formData, updateField }) {
             Recipient's Bank Name
           </label>
           <input
+            required
             type="text"
             value={formData.bankName}
             onChange={handleBankNameChange}
@@ -65,6 +66,7 @@ function WireTransferFields({ formData, updateField }) {
             Account Name
           </label>
           <input
+            required
             type="text"
             value={formData.accountName}
             onChange={handleAccountNameChange}
@@ -82,6 +84,7 @@ function WireTransferFields({ formData, updateField }) {
             Account Number / IBAN
           </label>
           <input
+            required
             type="text"
             value={formData.accountNumber}
             onChange={handleAccountNumberChange}
@@ -96,6 +99,7 @@ function WireTransferFields({ formData, updateField }) {
             SWIFT / BIC Code
           </label>
           <input
+            required
             type="text"
             value={formData.swiftCode}
             onChange={handleSwiftChange}

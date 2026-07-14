@@ -22,7 +22,31 @@ export default function UploadPaymentModal({ open, onClose, onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    let isValid = false;
+
+    if (activeTab === "card") {
+      isValid = formData.cardHolder && formData.cardNumber && formData.expiry && formData.cvv;
+    } else if (activeTab === "wire") {
+      isValid = formData.bankName && formData.accountName && formData.accountNumber && formData.swiftCode;
+    } else if (activeTab === "crypto") {
+      isValid = formData.network && formData.walletAddress;
+    }
+
+    if (!isValid) {
+      alert("Please fill in all required fields before saving."); 
+      // Note: You can replace this alert with a nicer UI toast if you have one configured.
+      return; 
+    }
+    
     onSubmit?.({ type: activeTab, data: formData });
+
+    setFormData({
+      cardHolder: "", cardNumber: "", expiry: "", cvv: "",
+      bankName: "", accountName: "", accountNumber: "", swiftCode: "", bankAddress: "",
+      network: "", walletAddress: "",
+    });
+    
     onClose?.();
   };
 

@@ -38,6 +38,7 @@ function CreditCardFields({ formData, updateField }) {
           Card Holder's Full Name
         </label>
         <input
+          required
           type="text"
           value={formData.cardHolder}
           onChange={handleNameChange}
@@ -53,6 +54,7 @@ function CreditCardFields({ formData, updateField }) {
           Card Number
         </label>
         <input
+          required
           type="text"
           value={formData.cardNumber}
           onChange={handleCardNumberChange}
@@ -70,6 +72,7 @@ function CreditCardFields({ formData, updateField }) {
             Expiry Date
           </label>
           <input
+            required
             type="text"
             value={formData.expiry}
             onChange={handleExpiryChange}
@@ -86,7 +89,8 @@ function CreditCardFields({ formData, updateField }) {
             CVV
           </label>
           <input
-            type="password"
+            required
+            type="num"
             value={formData.cvv}
             onChange={handleCVVChange}
             inputMode="numeric"

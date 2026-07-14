@@ -114,10 +114,10 @@ const Portfolio = () => {
                 </div>
             </div>
 
-            {/* Cash Balance */}
+            {/* Available Balance */}
             <div className="bg-surface rounded-lg border border-border p-4 hover:border-accent/40 my-transition">
                 <div className="flex justify-between items-start mb-2">
-                    <p className="text-sm text-text-light mt-1">Cash Balance</p>
+                    <p className="text-sm text-text-light mt-1">Available Balance</p>
                     <span className="bg-accent/10 p-1.5 rounded-md">
                         <Wallet size={18} className="text-accent" />
                     </span>

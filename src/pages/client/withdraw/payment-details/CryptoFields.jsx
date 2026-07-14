@@ -6,6 +6,7 @@ function CryptoFields({ formData, updateField }) {
           Network
         </label>
         <select
+          required
           value={formData.network}
           onChange={(e) => updateField("network", e.target.value)}
           className="w-full rounded-[var(--radius-md)] border border-border bg-surface-alt px-4 py-3 text-text outline-none my-transition focus:border-primary [&>option]:bg-surface"
@@ -25,6 +26,7 @@ function CryptoFields({ formData, updateField }) {
           Wallet Address
         </label>
         <textarea
+          required
           rows={4}
           value={formData.walletAddress}
           onChange={(e) => updateField("walletAddress", e.target.value)}
