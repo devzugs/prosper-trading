@@ -15,8 +15,8 @@ const ReferralStats = ({ stats }) => {
   const cards = [
     { label: "Total Referrals",  value: totalReferrals,      icon: Users },
     { label: "Active Referrals", value: activeReferrals,     icon: UserCheck },
-    { label: "Total Earnings",   value: fmt(totalEarned),    icon: DollarSign },
-    { label: "Pending Earnings", value: fmt(pendingPayouts), icon: Clock3 },
+    { label: "Total Referral Earnings",   value: fmt(totalEarned),    icon: DollarSign },
+    { label: "Available Referral Earnings", value: fmt(pendingPayouts), icon: Clock3 },
   ];
 
   return (
