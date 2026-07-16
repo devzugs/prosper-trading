@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { HelpCircle, MessageSquare, FileText, Clock } from "lucide-react";
 import FAQSection from "../../../components/sections/FaqSection";
-import ContactFormSection from "./ContactFormSection";
+import ContactAdminSection from "./ContactAdminSection";
 import SupportTicketsSection from "./SupportTicketsSection";
 import LiveChatSection from "./LiveChatSection";
 
@@ -102,7 +102,7 @@ const SupportPage = () => {
 
           {activeTab === "contact" && (
             <div className="space-y-6">
-              <ContactFormSection onSubmit={handleSubmitTicket} />
+              <ContactAdminSection onSubmit={handleSubmitTicket} />
             </div>
           )}
 
