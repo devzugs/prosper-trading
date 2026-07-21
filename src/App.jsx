@@ -27,6 +27,8 @@ import AdminApprovals from './pages/admin/AdminApprovals';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminReferrals from './pages/admin/AdminReferrals';
 import AdminAuditLog from './pages/admin/AdminAuditLog';
+import ForgotPasswordPage from './pages/public/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/public/auth/ResetPasswordPage';
 
 
 const App = () =>{
@@ -46,6 +48,8 @@ const App = () =>{
         {/* Auth Routes - intentionally outside PublicLayout/ClientLayout (own minimal layout) */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Client Routes - gated by ProtectedRoute, then wrapped in ClientLayout */}
         <Route element={<ProtectedRoute />}>
