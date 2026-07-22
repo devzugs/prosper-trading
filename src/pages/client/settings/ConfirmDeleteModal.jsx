@@ -1,85 +1,72 @@
-import React, { useState } from "react";
-import { X, TriangleAlert } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { AlertTriangle, LoaderCircle, X } from "lucide-react";
 
-const ConfirmDeleteModal = ({ open, onClose, onConfirm }) => {
-  const [confirmText, setConfirmText] = useState("");
-  const canConfirm = confirmText.trim().toUpperCase() === "DELETE";
+export default function ConfirmDeleteModal({ open, onClose, onConfirm, loading }) {
+  const [password, setPassword] = useState("");
+
+  // Reset input when modal toggles
+  useEffect(() => {
+    if (!open) setPassword("");
+  }, [open]);
 
   if (!open) return null;
 
-  const handleClose = () => {
-    setConfirmText("");
-    onClose?.();
-  };
-
-  const handleConfirm = () => {
-    if (!canConfirm) return;
-    onConfirm?.();
-    setConfirmText("");
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-surface shadow-2xl flex flex-col animate-pop-out">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-5">
-          <div className="flex items-center gap-3">
-            <span className="rounded-lg bg-danger/10 p-2 text-danger">
-              <TriangleAlert size={20} />
-            </span>
-            <h2 className="text-base font-semibold text-heading">Delete Account</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md rounded-2xl border border-border bg-surface-alt p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+        
+        <button 
+          onClick={onClose}
+          disabled={loading}
+          className="absolute right-4 top-4 text-text-muted transition-colors hover:text-text disabled:opacity-50"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="mb-6 flex flex-col items-center text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-danger/10">
+            <AlertTriangle className="h-7 w-7 text-danger" />
           </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="rounded-full p-2 text-text-light my-transition hover:bg-surface-alt hover:text-heading"
-          >
-            <X size={18} />
-          </button>
+          <h3 className="font-heading text-xl font-bold text-heading">Delete Account</h3>
+          <p className="mt-2 text-sm leading-relaxed text-text-light">
+            This action cannot be undone. All your portfolio data, transaction history, and API keys will be permanently deleted.
+          </p>
         </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-text-light leading-relaxed">
-            This will permanently close your account, cancel any active investment plans, and erase
-            your data. This action cannot be undone.
-          </p>
-
+        <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-text-light">
-              Type <span className="font-bold text-danger">DELETE</span> to confirm
+            <label className="mb-1.5 block text-sm font-medium text-text">
+              Confirm with your password
             </label>
             <input
-              type="text"
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="DELETE"
-              className="w-full rounded-md border border-border bg-surface-alt px-4 py-2.5 text-sm text-text outline-none my-transition focus:border-danger placeholder:text-text-muted/50"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              placeholder="Enter your current password"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text outline-none transition-colors focus:border-danger disabled:opacity-60"
             />
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="border-t border-border/50 px-6 py-4 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="rounded-md border border-border px-5 py-2.5 text-sm font-medium text-text my-transition hover:bg-surface-alt hover:text-heading"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={!canConfirm}
-            onClick={handleConfirm}
-            className="rounded-md bg-danger px-5 py-2.5 text-sm font-semibold text-white my-transition hover:bg-danger/90 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Delete Account
-          </button>
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 rounded-xl border border-border bg-transparent py-3 text-sm font-semibold text-text transition-colors hover:bg-surface disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onConfirm(password)}
+              disabled={loading || !password}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-danger py-3 text-sm font-semibold text-white transition-colors hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading && <LoaderCircle className="h-4 w-4 animate-spin" />}
+              {loading ? "Deleting..." : "Permanently Delete"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default ConfirmDeleteModal;
+}

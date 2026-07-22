@@ -76,6 +76,11 @@ export function AuthProvider({ children }) {
       listener.subscription.unsubscribe();
     };
   }, []);
+  
+  const updateProfile = async (updatedData) => {
+    // Optimistically update the local React state with the new data
+    setProfile(prev => ({ ...prev, ...updatedData }));
+  };
 
   const value = {
     session,
@@ -85,6 +90,9 @@ export function AuthProvider({ children }) {
     isAdmin: profile?.role === "admin",
 
     isSupabaseConfigured,
+    
+    // Expose the new function here
+    updateProfile, 
 
     signUp: (email, password, metadata = {}) =>
       supabase?.auth.signUp({

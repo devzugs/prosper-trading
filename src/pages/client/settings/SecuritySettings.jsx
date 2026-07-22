@@ -1,15 +1,10 @@
-import React, { useState } from "react";
-import { Eye, EyeOff, Check, Smartphone, Monitor } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Eye, EyeOff, Check, Smartphone, Monitor, LoaderCircle } from "lucide-react";
+import { useAuth } from "../../../context/AuthContext";
 import SettingsCard from "./SettingsCard";
 import Toggle from "./Toggle";
 
-const SESSIONS = [
-  { id: 1, device: "MacBook Pro · Chrome", location: "London, United Kingdom", icon: Monitor, current: true, lastActive: "Active now" },
-  { id: 2, device: "iPhone 15 · Safari", location: "London, United Kingdom", icon: Smartphone, current: false, lastActive: "2 hours ago" },
-  { id: 3, device: "Windows PC · Edge", location: "Manchester, United Kingdom", icon: Monitor, current: false, lastActive: "5 days ago" },
-];
-
-const PasswordField = ({ label, value, onChange, show, onToggleShow, autoComplete }) => (
+const PasswordField = ({ label, value, onChange, show, onToggleShow, autoComplete, disabled }) => (
   <div>
     <label className="mb-1 block text-sm font-medium text-text-light">{label}</label>
     <div className="relative">
@@ -18,12 +13,14 @@ const PasswordField = ({ label, value, onChange, show, onToggleShow, autoComplet
         value={value}
         onChange={onChange}
         autoComplete={autoComplete}
-        className="w-full rounded-md border border-border bg-surface px-4 py-2.5 pr-11 text-sm text-text outline-none my-transition focus:border-accent"
+        disabled={disabled}
+        className="w-full rounded-md border border-border bg-surface px-4 py-2.5 pr-11 text-sm text-text outline-none my-transition focus:border-accent disabled:opacity-60"
       />
       <button
         type="button"
         onClick={onToggleShow}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-light my-transition"
+        disabled={disabled}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-light my-transition disabled:opacity-60"
         aria-label={show ? "Hide password" : "Show password"}
       >
         {show ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -33,19 +30,63 @@ const PasswordField = ({ label, value, onChange, show, onToggleShow, autoComplet
 );
 
 const SecuritySettings = () => {
+  const { session } = useAuth();
+  const token = session?.access_token;
+
+  // Password State
   const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
   const [showPwd, setShowPwd] = useState({ current: false, next: false, confirm: false });
+  const [pwdLoading, setPwdLoading] = useState(false);
   const [pwdSaved, setPwdSaved] = useState(false);
   const [pwdError, setPwdError] = useState("");
 
+  // Preferences State
   const [loginAlerts, setLoginAlerts] = useState(true);
-  const [sessions, setSessions] = useState(SESSIONS);
+  const [alertsLoading, setAlertsLoading] = useState(false);
+
+  // Sessions State
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
 
   const updatePwd = (field) => (e) => setPwd((p) => ({ ...p, [field]: e.target.value }));
   const toggleShow = (field) => () => setShowPwd((p) => ({ ...p, [field]: !p[field] }));
 
-  const handlePasswordSubmit = (e) => {
+  // Fetch initial data
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchSecurityData = async () => {
+      try {
+        // Fetch active sessions
+        const sessionRes = await fetch("/api/auth/sessions", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          setSessions(sessionData.sessions || []);
+        }
+
+        // Fetch login alert preferences
+        const prefRes = await fetch("/api/user/preferences", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (prefRes.ok) {
+          const prefData = await prefRes.json();
+          setLoginAlerts(prefData.preferences?.loginAlerts ?? true);
+        }
+      } catch (err) {
+        console.error("Failed to load security settings:", err);
+      } finally {
+        setSessionsLoading(false);
+      }
+    };
+
+    fetchSecurityData();
+  }, [token]);
+
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+    setPwdError("");
 
     if (!pwd.current || !pwd.next || !pwd.confirm) {
       setPwdError("Please fill in all password fields.");
@@ -55,18 +96,83 @@ const SecuritySettings = () => {
       setPwdError("New password must be at least 8 characters.");
       return;
     }
+    if (!/(?=.*[A-Z])(?=.*[0-9])/.test(pwd.next)) {
+      setPwdError("New password must contain at least one uppercase letter and one number.");
+      return;
+    }
     if (pwd.next !== pwd.confirm) {
       setPwdError("New password and confirmation do not match.");
       return;
     }
+    if (pwd.current === pwd.next) {
+      setPwdError("New password must be different from the current password.");
+      return;
+    }
 
-    setPwdError("");
-    setPwdSaved(true);
-    setPwd({ current: "", next: "", confirm: "" });
-    setTimeout(() => setPwdSaved(false), 2500);
+    try {
+      setPwdLoading(true);
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: pwd.current,
+          newPassword: pwd.next,
+          newPasswordConfirm: pwd.confirm
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to update password.");
+      }
+
+      setPwdSaved(true);
+      setPwd({ current: "", next: "", confirm: "" });
+      setTimeout(() => setPwdSaved(false), 2500);
+    } catch (err) {
+      setPwdError(err.message);
+    } finally {
+      setPwdLoading(false);
+    }
   };
 
-  const revokeSession = (id) => setSessions((prev) => prev.filter((s) => s.id !== id));
+  const handleToggleAlerts = async (checked) => {
+    try {
+      setAlertsLoading(true);
+      const response = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ loginAlerts: checked })
+      });
+
+      if (!response.ok) throw new Error("Failed to update preferences");
+      setLoginAlerts(checked);
+    } catch (err) {
+      console.error("Failed to toggle login alerts:", err);
+    } finally {
+      setAlertsLoading(false);
+    }
+  };
+
+  const revokeSession = async (id) => {
+    try {
+      const response = await fetch(`/api/auth/sessions/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error("Failed to revoke session");
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      console.error("Failed to revoke session:", err);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -79,9 +185,10 @@ const SecuritySettings = () => {
             show={showPwd.current}
             onToggleShow={toggleShow("current")}
             autoComplete="current-password"
+            disabled={pwdLoading}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <PasswordField
               label="New Password"
               value={pwd.next}
@@ -89,6 +196,7 @@ const SecuritySettings = () => {
               show={showPwd.next}
               onToggleShow={toggleShow("next")}
               autoComplete="new-password"
+              disabled={pwdLoading}
             />
             <PasswordField
               label="Confirm New Password"
@@ -97,23 +205,35 @@ const SecuritySettings = () => {
               show={showPwd.confirm}
               onToggleShow={toggleShow("confirm")}
               autoComplete="new-password"
+              disabled={pwdLoading}
             />
           </div>
 
-          {pwdError && <p className="text-xs font-medium text-danger">{pwdError}</p>}
+          <div className="rounded-lg bg-surface p-3 text-xs text-text-muted">
+            <p className="mb-2 font-semibold">Password requirements:</p>
+            <ul className="space-y-1 pl-1">
+              <li className={pwd.next.length >= 8 ? "text-success" : ""}>• At least 8 characters</li>
+              <li className={/(?=.*[A-Z])/.test(pwd.next) ? "text-success" : ""}>• At least one uppercase letter</li>
+              <li className={/(?=.*[0-9])/.test(pwd.next) ? "text-success" : ""}>• At least one number</li>
+            </ul>
+          </div>
+
+          {pwdError && <p className="text-sm font-medium text-danger">{pwdError}</p>}
 
           <div className="flex items-center justify-end gap-3 pt-1">
             {pwdSaved && (
-              <span className="flex items-center gap-1.5 text-xs font-medium text-success">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-success animate-in fade-in">
                 <Check size={14} />
                 Password updated
               </span>
             )}
             <button
               type="submit"
-              className="rounded-xl bg-accent px-6 py-2.5 text-sm font-bold text-secondary shadow-lg shadow-accent/20 my-transition hover:bg-accent-light"
+              disabled={pwdLoading}
+              className="flex items-center gap-2 rounded-xl bg-accent px-6 py-2.5 text-sm font-bold text-secondary shadow-lg shadow-accent/20 my-transition hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Update Password
+              {pwdLoading && <LoaderCircle className="h-4 w-4 animate-spin" />}
+              {pwdLoading ? "Updating..." : "Update Password"}
             </button>
           </div>
         </form>
@@ -123,49 +243,64 @@ const SecuritySettings = () => {
         <Toggle
           id="loginalerts"
           checked={loginAlerts}
-          onChange={setLoginAlerts}
+          onChange={handleToggleAlerts}
+          disabled={alertsLoading}
           label="Email me on new sign-ins"
           description="Get notified whenever your account is accessed from a new device or location."
         />
       </SettingsCard>
 
       <SettingsCard title="Active Sessions" description="Devices currently signed in to your account.">
-        <ul className="divide-y divide-border/60">
-          {sessions.map((s) => (
-            <li key={s.id} className="flex items-center gap-4 py-3.5 first:pt-0 last:pb-0">
-              <span className="bg-surface p-2.5 rounded-lg shrink-0">
-                <s.icon size={16} className="text-text-light" />
-              </span>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-heading truncate">{s.device}</p>
-                  {s.current && (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-success/10 text-success shrink-0">
-                      This device
-                    </span>
+        {sessionsLoading ? (
+          <div className="flex items-center justify-center py-6 text-text-muted">
+            <LoaderCircle className="h-5 w-5 animate-spin" />
+          </div>
+        ) : (
+          <ul className="divide-y divide-border/60">
+            {sessions.map((s) => (
+              <li key={s.id} className="flex items-center gap-4 py-3.5 first:pt-0 last:pb-0">
+                <span className="shrink-0 rounded-lg bg-surface p-2.5">
+                  {s.deviceType === "mobile" ? (
+                    <Smartphone size={16} className="text-text-light" />
+                  ) : (
+                    <Monitor size={16} className="text-text-light" />
                   )}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium text-heading">
+                      {s.browser} · {s.os}
+                    </p>
+                    {s.isCurrent && (
+                      <span className="shrink-0 rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success">
+                        This device
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-text-muted">
+                    {s.location} · {s.lastActive}
+                  </p>
                 </div>
-                <p className="text-xs text-text-muted mt-0.5">
-                  {s.location} · {s.lastActive}
-                </p>
-              </div>
 
-              {!s.current && (
-                <button
-                  onClick={() => revokeSession(s.id)}
-                  className="shrink-0 text-xs font-semibold text-danger hover:text-danger/80 my-transition"
-                >
-                  Revoke
-                </button>
-              )}
-            </li>
-          ))}
+                {!s.isCurrent && (
+                  <button
+                    onClick={() => revokeSession(s.id)}
+                    className="shrink-0 text-xs font-semibold text-danger my-transition hover:text-danger/80"
+                  >
+                    Revoke
+                  </button>
+                )}
+              </li>
+            ))}
 
-          {sessions.length === 0 && (
-            <li className="py-6 text-center text-sm text-text-muted">No other active sessions.</li>
-          )}
-        </ul>
+            {sessions.length === 0 && (
+              <li className="py-6 text-center text-sm text-text-muted">
+                No other active sessions found.
+              </li>
+            )}
+          </ul>
+        )}
       </SettingsCard>
     </div>
   );

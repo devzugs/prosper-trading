@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
-import { User, Mail, Lock, Gift, LoaderCircle } from "lucide-react";
-
+import { User, Mail, Lock, Gift, LoaderCircle, Phone, Globe } from "lucide-react";
+import { parsePhoneNumber, isValidPhoneNumber } from "libphonenumber-js";
+import COUNTRIES from "../../../constants/countries";
 import AuthLayout from "./AuthLayout";
 import AuthInput from "./AuthInput";
+
+
 
 export default function SignupPage() {
   const { signUp } = useAuth();
@@ -14,6 +17,8 @@ export default function SignupPage() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
+    phone: "",
+    country: "GB", // Defaulting to NG based on typical usage, adjust as needed
     referralCode: "",
     password: "",
     confirmPassword: ""
@@ -30,34 +35,56 @@ export default function SignupPage() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (error) setError("");
+  };
+
+  const validateForm = () => {
+    if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.password) {
+      return "Please fill in all required fields.";
+    }
+    
+    // Phone validation using libphonenumber-js
+    try {
+      if (!isValidPhoneNumber(formData.phone, formData.country)) {
+        return "Please enter a valid phone number for the selected country.";
+      }
+    } catch (err) {
+      return "Invalid phone number format.";
+    }
+
+    if (formData.password.length < 8) {
+      return "Password must be at least 8 characters.";
+    }
+    if (formData.password !== formData.confirmPassword) {
+      return "Passwords do not match.";
+    }
+    return null;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-
-    if (!formData.fullName.trim() || !formData.email.trim() || !formData.password || !formData.confirmPassword) {
-      setError("Please fill in all required fields.");
-      return;
-    }
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
+    const validationError = validateForm();
+    
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     try {
       setSubmitting(true);
-      const { data, error } = await signUp(formData.email, formData.password, {
+      
+      // Format phone to strict E.164 before sending to backend
+      const formattedPhone = parsePhoneNumber(formData.phone, formData.country).number;
+
+      const { data, error: authError } = await signUp(formData.email, formData.password, {
         full_name: formData.fullName,
+        phone: formattedPhone,
+        country: formData.country,
         referral_code: formData.referralCode || null,
       });
 
-      if (error) {
-        setError(error.message);
+      if (authError) {
+        setError(authError.message);
         return;
       }
 
@@ -109,7 +136,31 @@ export default function SignupPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <AuthInput icon={User} name="fullName" value={formData.fullName} onChange={handleChange} label="Full Name" placeholder="John Doe" required />
-          <AuthInput icon={Mail} name="email" type="email" value={formData.email} onChange={handleChange} label="Email Address" placeholder="john@example.com" required />
+          <AuthInput icon={Mail} name="email" type="email" value={formData.email} onChange={handleChange} label="Email Address" placeholder="johndoe01@gmail.com" required />
+          
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-1">
+              <label className="mb-1.5 block text-sm font-medium text-text-light">Country</label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-text-muted">
+                  <Globe className="h-5 w-5" />
+                </div>
+                <select
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                  className="w-full appearance-none rounded-xl border border-border bg-surface py-3 pl-10 pr-4 text-sm text-heading transition-all focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  required
+                >
+                  {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="col-span-2">
+              <AuthInput icon={Phone} name="phone" type="tel" value={formData.phone} onChange={handleChange} label="Phone Number" placeholder="1234 567 890" required />
+            </div>
+          </div>
+
           <AuthInput icon={Gift} name="referralCode" value={formData.referralCode} onChange={handleChange} label="Referral Code (Optional)" placeholder="Enter code" />
           <AuthInput icon={Lock} name="password" type="password" value={formData.password} onChange={handleChange} label="Password" placeholder="Min. 8 characters" required />
           <AuthInput icon={Lock} name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} label="Confirm Password" placeholder="Re-enter password" required />
