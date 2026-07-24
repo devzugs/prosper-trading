@@ -95,17 +95,58 @@ const TransactionHistoryPage = () => {
 
         const fetchTransactions = async () => {
             setLoading(true);
-            const { data, error } = await supabase
-                .from("transactions")
-                .select("id, type, currency, amount, status, note, created_at")
-                .eq("user_id", user.id)
-                .order("created_at", { ascending: false });
+            
+            // Fetch completed/reversed from the ledger, and pending from deposits/withdrawals
+            const [txRes, depRes, withRes] = await Promise.all([
+                supabase
+                    .from("transactions")
+                    .select("id, type, currency, amount, status, note, created_at")
+                    .eq("user_id", user.id)
+                    .order("created_at", { ascending: false }),
+                supabase
+                    .from("deposits")
+                    .select("id, coin, amount, status, created_at")
+                    .eq("user_id", user.id)
+                    .eq("status", "pending"),
+                supabase
+                    .from("withdrawals")
+                    .select("id, currency, amount, status, created_at")
+                    .eq("user_id", user.id)
+                    .eq("status", "pending")
+            ]);
 
-            if (error) {
-                console.error("Error fetching transactions:", error);
+            if (txRes.error || depRes.error || withRes.error) {
+                console.error("Error fetching transactions:", txRes.error || depRes.error || withRes.error);
                 setLoadError("Couldn't load your transaction history. Please try again.");
             } else {
-                setTransactions(data || []);
+                // Normalize pending deposits to match the transactions schema
+                const pendingDeposits = (depRes.data || []).map(d => ({
+                    id: d.id,
+                    type: "deposit",
+                    currency: d.coin, // The deposits table uses 'coin' instead of 'currency'
+                    amount: d.amount,
+                    status: d.status,
+                    note: "Pending admin review",
+                    created_at: d.created_at
+                }));
+
+                // Normalize pending withdrawals
+                const pendingWithdrawals = (withRes.data || []).map(w => ({
+                    id: w.id,
+                    type: "withdrawal",
+                    currency: w.currency,
+                    // The ledger tracks withdrawals as negative values, so we mirror that here
+                    amount: -Math.abs(w.amount), 
+                    status: w.status,
+                    note: "Pending admin review",
+                    created_at: w.created_at
+                }));
+
+                // Merge all records and sort them by date descending
+                const allTransactions = [...(txRes.data || []), ...pendingDeposits, ...pendingWithdrawals];
+                allTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                setTransactions(allTransactions);
             }
             setLoading(false);
         };
