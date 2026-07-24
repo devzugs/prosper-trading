@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Camera, Trash2, Check, LoaderCircle } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
+import { supabase } from "../../../lib/supabaseClient";
 import UserIdentity, { getUserFullName } from "../../../components/user/UserIdentity";
 import SettingsCard from "./SettingsCard";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import COUNTRIES from "../../../constants/countries";
 
 const ProfileSettings = () => {
-  const { profile, user, session, updateProfile } = useAuth();
-  const token = session?.access_token;
+  const { profile, user, updateProfile } = useAuth();
   
   const currentFullName = getUserFullName({ profile, user });
   
@@ -36,20 +36,16 @@ const ProfileSettings = () => {
   };
 
   const handleAvatarUpload = async (fileDataUrl) => {
-    // Convert data URL to file blob for upload
     const res = await fetch(fileDataUrl);
     const blob = await res.blob();
     const formData = new FormData();
     formData.append("file", blob, "avatar.jpg");
     
-    const response = await fetch("/api/upload/avatar", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+    const { data, error } = await supabase.functions.invoke('upload-avatar', {
       body: formData
     });
 
-    if (!response.ok) throw new Error("Avatar upload failed");
-    const data = await response.json();
+    if (error) throw new Error("Avatar upload failed");
     return data.avatarUrl;
   };
 
@@ -71,36 +67,25 @@ const ProfileSettings = () => {
       setLoading(true);
       let finalAvatarUrl = profile?.avatar_url;
 
-      // Only upload if it's a new base64 image (not an existing URL)
       if (avatarPreview && avatarPreview.startsWith("data:")) {
         finalAvatarUrl = await handleAvatarUpload(avatarPreview);
       } else if (!avatarPreview) {
-        finalAvatarUrl = null; // User removed their avatar
+        finalAvatarUrl = null; 
       }
 
-      const response = await fetch("/api/user/profile", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('user-profile', {
+        method: 'PATCH',
+        body: {
           fullName: form.fullName,
           phone: form.phone,
           country: form.country,
           bio: form.bio,
           avatar: finalAvatarUrl
-        })
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to update profile");
-      }
-
-      const data = await response.json();
+      if (error) throw new Error(error.message || "Failed to update profile");
       
-      // Update the context state globally
       if (updateProfile) await updateProfile(data.user);
 
       setSaved(true);
@@ -155,7 +140,7 @@ const ProfileSettings = () => {
               type="text"
               value={form.fullName}
               onChange={update("fullName")}
-              placeholder="John DOe"
+              placeholder="John Doe"
               disabled={loading}
               className="my-transition w-full rounded-md border border-border bg-surface px-4 py-2.5 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
             />
@@ -167,7 +152,7 @@ const ProfileSettings = () => {
               type="email"
               value={form.email}
               disabled
-              placeholder="JohnDoe01.com"
+              placeholder="johndoe@example.com"
               className="w-full cursor-not-allowed rounded-md border border-border bg-surface px-4 py-2.5 text-sm text-text opacity-60 outline-none"
             />
           </div>
@@ -178,7 +163,7 @@ const ProfileSettings = () => {
               type="tel"
               value={form.phone}
               onChange={update("phone")}
-              placeholder="1234567890"
+              placeholder="+1234567890"
               disabled={loading}
               className="my-transition w-full rounded-md border border-border bg-surface px-4 py-2.5 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
             />

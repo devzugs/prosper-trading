@@ -8,3 +8,5 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null
+
+export const API_URL = supabaseUrl ? `${supabaseUrl}/functions/v1` : '';

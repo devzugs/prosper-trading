@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import { corsHeaders } from "../_shared/cors.js"
+import { corsHeaders } from "../_shared/cors.ts"
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -26,6 +26,7 @@ serve(async (req) => {
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath)
     return new Response(JSON.stringify({ success: true, avatarUrl: publicUrl }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }})
   } catch (error) {
-    return new Response(JSON.stringify({ message: error.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }})
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred"
+    return new Response(JSON.stringify({ message: errorMessage }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }})
   }
 })

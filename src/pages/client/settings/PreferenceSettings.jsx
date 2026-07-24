@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Check, LoaderCircle, AlertCircle } from "lucide-react";
-import { useAuth } from "../../../context/AuthContext";
+import { supabase } from "../../../lib/supabaseClient";
 import SettingsCard from "./SettingsCard";
 
 const CURRENCIES = ["USD - US Dollar", "EUR - Euro", "GBP - British Pound"];
@@ -29,9 +29,6 @@ const Select = ({ label, value, onChange, options, disabled }) => (
 );
 
 const PreferenceSettings = () => {
-  const { session } = useAuth();
-  const token = session?.access_token;
-
   const [prefs, setPrefs] = useState({
     currency: CURRENCIES[0],
     language: LANGUAGES[0],
@@ -45,19 +42,13 @@ const PreferenceSettings = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchPrefs = async () => {
       try {
-        const response = await fetch("/api/user/preferences", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const { data, error } = await supabase.functions.invoke('user-preferences', { method: 'GET' });
+        if (error) throw error;
         
-        if (response.ok) {
-          const data = await response.json();
-          if (data.preferences) {
-            setPrefs(prev => ({ ...prev, ...data.preferences }));
-          }
+        if (data?.preferences) {
+          setPrefs(prev => ({ ...prev, ...data.preferences }));
         }
       } catch (err) {
         console.error("Failed to fetch preferences:", err);
@@ -67,7 +58,7 @@ const PreferenceSettings = () => {
     };
 
     fetchPrefs();
-  }, [token]);
+  }, []);
 
   const update = (field) => (e) => setPrefs((p) => ({ ...p, [field]: e.target.value }));
 
@@ -77,19 +68,12 @@ const PreferenceSettings = () => {
     setSaving(true);
     
     try {
-      const response = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(prefs)
+      const { error } = await supabase.functions.invoke('user-preferences', {
+        method: 'PATCH',
+        body: prefs
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to save preferences.");
-      }
+      if (error) throw new Error(error.message || "Failed to save preferences.");
 
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);

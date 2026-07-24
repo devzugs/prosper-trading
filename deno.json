@@ -1,0 +1,24 @@
+{
+  "tasks": {
+    "start": "deno run --allow-net --allow-env --allow-read supabase functions serve"
+  },
+  "imports": {
+    "https://": "https://",
+    "std/": "https://deno.land/std@0.168.0/",
+    "@supabase/": "https://esm.sh/@supabase/",
+    "resend": "https://esm.sh/resend@latest"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "https://esm.sh/react@18"
+  },
+  "fmt": {
+    "semiColons": true,
+    "singleQuote": true
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }
+}

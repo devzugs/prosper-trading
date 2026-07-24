@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Lock, LoaderCircle, CheckCircle2, AlertCircle } from "lucide-react";
+import { supabase } from "../../../lib/supabaseClient";
 import AuthLayout from "./AuthLayout";
 import AuthInput from "./AuthInput";
 
@@ -18,7 +19,6 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Failsafe: If a user lands here without a token, throw a hard error.
   useEffect(() => {
     if (!token) {
       setError("Invalid or missing reset token. Please request a new password reset link.");
@@ -60,24 +60,18 @@ export default function ResetPasswordPage() {
     try {
       setLoading(true);
       
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { error: invokeError } = await supabase.functions.invoke('reset-password', {
+        body: {
           token,
           newPassword: formData.newPassword,
           newPasswordConfirm: formData.confirmPassword
-        })
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to reset password. Your token may have expired.");
-      }
+      if (invokeError) throw new Error(invokeError.message || "Failed to reset password. Your token may have expired.");
 
       setSuccess(true);
       
-      // Auto-redirect to login after 3 seconds
       setTimeout(() => {
         navigate("/login", { replace: true });
       }, 3000);
@@ -141,7 +135,6 @@ export default function ResetPasswordPage() {
                 required
               />
 
-              {/* Password Requirements Helper */}
               <div className="rounded-lg bg-surface p-3 text-xs text-text-muted">
                 <p className="mb-1 font-semibold">Password requirements:</p>
                 <ul className="space-y-1 pl-1">

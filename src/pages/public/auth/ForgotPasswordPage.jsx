@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, LoaderCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { supabase } from "../../../lib/supabaseClient";
 import AuthLayout from "./AuthLayout";
 import AuthInput from "./AuthInput";
 
@@ -23,21 +24,15 @@ export default function ForgotPasswordPage() {
     try {
       setLoading(true);
       
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
+      const { error: invokeError } = await supabase.functions.invoke('forgot-password', {
+        body: { email }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to process request. Please try again.");
-      }
+      if (invokeError) throw new Error(invokeError.message || "Failed to process request. Please try again.");
 
       setSubmitted(true);
       setCanResend(false);
       
-      // Simple rate limiting UX for resend button (60 seconds)
       setTimeout(() => setCanResend(true), 60000);
 
     } catch (err) {
@@ -67,7 +62,7 @@ export default function ForgotPasswordPage() {
                 type="email"
                 name="email"
                 label="Email Address"
-                placeholder="john@example.com"
+                placeholder="johndoe@example.com"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);

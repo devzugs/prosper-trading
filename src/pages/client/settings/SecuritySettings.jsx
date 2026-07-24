@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Check, Smartphone, Monitor, LoaderCircle } from "lucide-react";
-import { useAuth } from "../../../context/AuthContext";
+import { supabase } from "../../../lib/supabaseClient";
 import SettingsCard from "./SettingsCard";
 import Toggle from "./Toggle";
 
@@ -30,49 +30,32 @@ const PasswordField = ({ label, value, onChange, show, onToggleShow, autoComplet
 );
 
 const SecuritySettings = () => {
-  const { session } = useAuth();
-  const token = session?.access_token;
-
-  // Password State
   const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
   const [showPwd, setShowPwd] = useState({ current: false, next: false, confirm: false });
   const [pwdLoading, setPwdLoading] = useState(false);
   const [pwdSaved, setPwdSaved] = useState(false);
   const [pwdError, setPwdError] = useState("");
 
-  // Preferences State
   const [loginAlerts, setLoginAlerts] = useState(true);
   const [alertsLoading, setAlertsLoading] = useState(false);
 
-  // Sessions State
   const [sessions, setSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
 
   const updatePwd = (field) => (e) => setPwd((p) => ({ ...p, [field]: e.target.value }));
   const toggleShow = (field) => () => setShowPwd((p) => ({ ...p, [field]: !p[field] }));
 
-  // Fetch initial data
   useEffect(() => {
-    if (!token) return;
-
     const fetchSecurityData = async () => {
       try {
-        // Fetch active sessions
-        const sessionRes = await fetch("/api/auth/sessions", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (sessionRes.ok) {
-          const sessionData = await sessionRes.json();
-          setSessions(sessionData.sessions || []);
+        const { data: sessionData, error: sessionError } = await supabase.functions.invoke('auth-sessions', { method: 'GET' });
+        if (!sessionError) {
+          setSessions(sessionData?.sessions || []);
         }
 
-        // Fetch login alert preferences
-        const prefRes = await fetch("/api/user/preferences", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (prefRes.ok) {
-          const prefData = await prefRes.json();
-          setLoginAlerts(prefData.preferences?.loginAlerts ?? true);
+        const { data: prefData, error: prefError } = await supabase.functions.invoke('user-preferences', { method: 'GET' });
+        if (!prefError) {
+          setLoginAlerts(prefData?.preferences?.loginAlerts ?? true);
         }
       } catch (err) {
         console.error("Failed to load security settings:", err);
@@ -82,7 +65,7 @@ const SecuritySettings = () => {
     };
 
     fetchSecurityData();
-  }, [token]);
+  }, []);
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -111,23 +94,16 @@ const SecuritySettings = () => {
 
     try {
       setPwdLoading(true);
-      const response = await fetch("/api/auth/change-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      
+      const { error } = await supabase.functions.invoke('change-password', {
+        body: {
           currentPassword: pwd.current,
           newPassword: pwd.next,
           newPasswordConfirm: pwd.confirm
-        })
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to update password.");
-      }
+      if (error) throw new Error(error.message || "Failed to update password.");
 
       setPwdSaved(true);
       setPwd({ current: "", next: "", confirm: "" });
@@ -142,16 +118,13 @@ const SecuritySettings = () => {
   const handleToggleAlerts = async (checked) => {
     try {
       setAlertsLoading(true);
-      const response = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ loginAlerts: checked })
+      
+      const { error } = await supabase.functions.invoke('user-preferences', {
+        method: 'PATCH',
+        body: { loginAlerts: checked }
       });
 
-      if (!response.ok) throw new Error("Failed to update preferences");
+      if (error) throw new Error("Failed to update preferences");
       setLoginAlerts(checked);
     } catch (err) {
       console.error("Failed to toggle login alerts:", err);
@@ -162,12 +135,11 @@ const SecuritySettings = () => {
 
   const revokeSession = async (id) => {
     try {
-      const response = await fetch(`/api/auth/sessions/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+      const { error } = await supabase.functions.invoke(`auth-sessions/${id}`, { 
+        method: 'DELETE' 
       });
 
-      if (!response.ok) throw new Error("Failed to revoke session");
+      if (error) throw new Error("Failed to revoke session");
       setSessions((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
       console.error("Failed to revoke session:", err);

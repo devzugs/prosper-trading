@@ -2,15 +2,15 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PauseCircle, Trash2, LoaderCircle, AlertCircle } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
+import { supabase } from "../../../lib/supabaseClient";
 import SettingsCard from "./SettingsCard";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 const DangerZoneSettings = () => {
   const navigate = useNavigate();
-  const { session, signOut } = useAuth();
-  const token = session?.access_token;
+  const { signOut } = useAuth();
   
-  const [deactivated, setDeactivated] = useState(false); // Should ideally be initialized from profile.is_deactivated
+  const [deactivated, setDeactivated] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   
   const [loadingDeactivate, setLoadingDeactivate] = useState(false);
@@ -20,25 +20,17 @@ const DangerZoneSettings = () => {
   const handleDeactivate = async () => {
     setError("");
     
-    // Security check per implementation plan
     const password = prompt("To deactivate your account, please confirm with your password:");
     if (!password) return;
 
     try {
       setLoadingDeactivate(true);
-      const response = await fetch("/api/user/deactivate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ password })
+      
+      const { error } = await supabase.functions.invoke('deactivate-account', {
+        body: { password }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to deactivate account.");
-      }
+      if (error) throw new Error(error.message || "Failed to deactivate account.");
 
       setDeactivated(true);
     } catch (err) {
@@ -49,15 +41,12 @@ const DangerZoneSettings = () => {
   };
 
   const handleReactivate = async () => {
-    // Assuming you have a reactivate endpoint per the plan
     try {
       setLoadingDeactivate(true);
-      const response = await fetch("/api/user/reactivate", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { error } = await supabase.functions.invoke('reactivate-account', { method: 'POST' });
 
-      if (response.ok) setDeactivated(false);
+      if (error) throw error;
+      setDeactivated(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -69,22 +58,16 @@ const DangerZoneSettings = () => {
     setError("");
     try {
       setLoadingDelete(true);
-      const response = await fetch("/api/user/account", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ password })
+      
+      const { error } = await supabase.functions.invoke('delete-account', {
+        method: 'DELETE',
+        body: { password }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to delete account. Incorrect password?");
-      }
+      if (error) throw new Error(error.message || "Failed to delete account. Incorrect password?");
 
       setModalOpen(false);
-      await signOut(); // Clear auth context and session
+      await signOut(); 
       navigate("/login", { replace: true });
       
     } catch (err) {
