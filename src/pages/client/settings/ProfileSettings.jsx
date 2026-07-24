@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Camera, Trash2, Check, LoaderCircle } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
-import { supabase } from "../../../lib/supabaseClient";
+import { supabase, API_URL } from "../../../lib/supabaseClient";
 import UserIdentity, { getUserFullName } from "../../../components/user/UserIdentity";
 import SettingsCard from "./SettingsCard";
 import { isValidPhoneNumber } from "libphonenumber-js";
@@ -21,6 +21,7 @@ const ProfileSettings = () => {
   });
   
   const [avatarPreview, setAvatarPreview] = useState(profile?.avatar_url || null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -30,23 +31,37 @@ const ProfileSettings = () => {
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // C1 FIX: keep the real File object so MIME type is preserved on upload
+    setPendingAvatarFile(file);
     const reader = new FileReader();
     reader.onload = () => setAvatarPreview(reader.result);
     reader.readAsDataURL(file);
   };
 
-  const handleAvatarUpload = async (fileDataUrl) => {
-    const res = await fetch(fileDataUrl);
-    const blob = await res.blob();
+  const handleAvatarUpload = async (file) => {
+    // C1 FIX: supabase.functions.invoke() does not support FormData — it JSON-serialises
+    // the body and omits the multipart boundary, so req.formData() in the edge function
+    // fails to parse it. Use raw fetch instead so the browser sets the correct
+    // Content-Type: multipart/form-data; boundary=... header automatically.
     const formData = new FormData();
-    formData.append("file", blob, "avatar.jpg");
-    
-    const { data, error } = await supabase.functions.invoke('upload-avatar', {
-      body: formData
+    formData.append("file", file);
+
+    // Grab the live session token to authenticate the request
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Not authenticated.");
+
+    const response = await fetch(`${API_URL}/upload-avatar`, {
+      method: "POST",
+      headers: {
+        // Do NOT set Content-Type manually — the browser must set it with the boundary
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: formData,
     });
 
-    if (error) throw new Error("Avatar upload failed");
-    return data.avatarUrl;
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || "Avatar upload failed");
+    return result.avatarUrl;
   };
 
   const handleSave = async (e) => {
@@ -67,15 +82,19 @@ const ProfileSettings = () => {
       setLoading(true);
       let finalAvatarUrl = profile?.avatar_url;
 
-      if (avatarPreview && avatarPreview.startsWith("data:")) {
-        finalAvatarUrl = await handleAvatarUpload(avatarPreview);
+      if (pendingAvatarFile) {
+        // C1 FIX: pass the raw File, not the data URL
+        finalAvatarUrl = await handleAvatarUpload(pendingAvatarFile);
+        setPendingAvatarFile(null);
       } else if (!avatarPreview) {
         finalAvatarUrl = null; 
       }
 
+      // C2 FIX: supabase.functions.invoke ignores the `method` option and always
+      // sends POST. The edge function now accepts POST with an `action` field.
       const { data, error } = await supabase.functions.invoke('user-profile', {
-        method: 'PATCH',
         body: {
+          action: 'update',
           fullName: form.fullName,
           phone: form.phone,
           country: form.country,

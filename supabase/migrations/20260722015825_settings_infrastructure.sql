@@ -1,7 +1,11 @@
 -- 1. Enhance Profiles Table
 alter table public.profiles
   add column phone text,
-  add column avatar_url text;
+  add column avatar_url text,
+  -- C6 FIX: bio column was referenced in user-profile edge function but never created
+  add column bio text,
+  -- C4 FIX: is_deactivated was written by deactivate-account edge function but never created
+  add column is_deactivated boolean not null default false;
 
 -- 2. Create User Preferences Table
 create table public.user_preferences (

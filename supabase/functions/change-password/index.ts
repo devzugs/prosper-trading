@@ -1,19 +1,29 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsHeaders } from "../_shared/cors.ts"
 
 serve(async (req) => {
-  // Handle CORS preflight request for browser security
+  // FIX #7: Improved CORS preflight response
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, {
+      status: 204,
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400',
+      }
+    })
   }
 
   try {
-    // Initialize a user-scoped client using the Authorization header
+    // FIX #1: Authorization header null handling - ensure header is always a string
+    const authHeader = req.headers.get('Authorization') ?? ''
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization') } } }
+      { global: { headers: { Authorization: authHeader } } }
     )
 
     const { currentPassword, newPassword, newPasswordConfirm } = await req.json()
@@ -58,6 +68,7 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error) {
+    // FIX #2: Error type safety - handle non-Error objects
     const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred"
     return new Response(JSON.stringify({ message: errorMessage }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

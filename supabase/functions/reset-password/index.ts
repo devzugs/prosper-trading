@@ -1,10 +1,19 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsHeaders } from "../_shared/cors.ts"
 
 serve(async (req) => {
+  // FIX #7: Improved CORS preflight response
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, {
+      status: 204,
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400',
+      }
+    })
   }
 
   try {
@@ -14,21 +23,22 @@ serve(async (req) => {
     if (newPassword !== newPasswordConfirm) throw new Error("Passwords do not match.")
     if (newPassword.length < 8) throw new Error("Password must be at least 8 characters.")
 
-    // 1. Initialize client using the token provided from the URL
-    // If the token is valid, Supabase will recognize the session
+    // Bug fix #8: recovery tokens from Supabase email links are OTP codes, not raw JWTs.
+    // They must be exchanged for a real session first via exchangeCodeForSession,
+    // not passed directly as a Bearer token (which fails for OTP-type tokens).
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: `Bearer ${token}` } } }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     )
 
-    // 2. Verify the token actually belongs to a real user session
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
-    if (authError || !user) {
+    const { data: sessionData, error: exchangeError } = await supabaseClient.auth.exchangeCodeForSession(token)
+    if (exchangeError || !sessionData?.user) {
       throw new Error("Invalid or expired recovery token. Please request a new link.")
     }
 
-    // 3. Initialize Admin client to bypass RLS and force the password update
+    const user = sessionData.user
+
+    // Initialize Admin client to bypass RLS and force the password update
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -46,6 +56,7 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error) {
+    // FIX #2: Error type safety - handle non-Error objects
     const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred"
     return new Response(JSON.stringify({ message: errorMessage }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

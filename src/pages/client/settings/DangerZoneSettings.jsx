@@ -41,9 +41,13 @@ const DangerZoneSettings = () => {
   };
 
   const handleReactivate = async () => {
+    // C3 FIX: reactivate-account function does not exist.
+    // Reactivation is handled by the deactivate-account function with action: 'reactivate'.
     try {
       setLoadingDeactivate(true);
-      const { error } = await supabase.functions.invoke('reactivate-account', { method: 'POST' });
+      const { error } = await supabase.functions.invoke('deactivate-account', {
+        body: { action: 'reactivate' }
+      });
 
       if (error) throw error;
       setDeactivated(false);
@@ -59,9 +63,9 @@ const DangerZoneSettings = () => {
     try {
       setLoadingDelete(true);
       
+      // C2 FIX: invoke() ignores the method option; action field used instead
       const { error } = await supabase.functions.invoke('delete-account', {
-        method: 'DELETE',
-        body: { password }
+        body: { action: 'delete', password }
       });
 
       if (error) throw new Error(error.message || "Failed to delete account. Incorrect password?");

@@ -44,11 +44,22 @@ const PreferenceSettings = () => {
   useEffect(() => {
     const fetchPrefs = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('user-preferences', { method: 'GET' });
+        // C2 FIX: invoke() always sends POST; use action field to signal intent
+        const { data, error } = await supabase.functions.invoke('user-preferences', {
+          body: { action: 'get' }
+        });
         if (error) throw error;
-        
-        if (data?.preferences) {
-          setPrefs(prev => ({ ...prev, ...data.preferences }));
+
+        if (data?.preferences && Object.keys(data.preferences).length > 0) {
+          const p = data.preferences;
+          // C5 FIX: DB returns snake_case; map to the camelCase keys the form uses
+          setPrefs(prev => ({
+            ...prev,
+            ...(p.currency   !== undefined && { currency:   p.currency }),
+            ...(p.language   !== undefined && { language:   p.language }),
+            ...(p.timezone   !== undefined && { timezone:   p.timezone }),
+            ...(p.date_format !== undefined && { dateFormat: p.date_format }),
+          }));
         }
       } catch (err) {
         console.error("Failed to fetch preferences:", err);
@@ -68,9 +79,16 @@ const PreferenceSettings = () => {
     setSaving(true);
     
     try {
+      // C2 FIX: use action field
+      // C5 FIX: send snake_case keys to match the DB column names
       const { error } = await supabase.functions.invoke('user-preferences', {
-        method: 'PATCH',
-        body: prefs
+        body: {
+          action: 'update',
+          currency:    prefs.currency,
+          language:    prefs.language,
+          timezone:    prefs.timezone,
+          date_format: prefs.dateFormat,
+        }
       });
 
       if (error) throw new Error(error.message || "Failed to save preferences.");

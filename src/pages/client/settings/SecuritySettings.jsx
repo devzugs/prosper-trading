@@ -48,14 +48,20 @@ const SecuritySettings = () => {
   useEffect(() => {
     const fetchSecurityData = async () => {
       try {
-        const { data: sessionData, error: sessionError } = await supabase.functions.invoke('auth-sessions', { method: 'GET' });
+        // C2 FIX: invoke() always sends POST; use action field to signal intent
+        const { data: sessionData, error: sessionError } = await supabase.functions.invoke('auth-sessions', {
+          body: { action: 'list' }
+        });
         if (!sessionError) {
           setSessions(sessionData?.sessions || []);
         }
 
-        const { data: prefData, error: prefError } = await supabase.functions.invoke('user-preferences', { method: 'GET' });
+        const { data: prefData, error: prefError } = await supabase.functions.invoke('user-preferences', {
+          body: { action: 'get' }
+        });
         if (!prefError) {
-          setLoginAlerts(prefData?.preferences?.loginAlerts ?? true);
+          // C5 FIX: DB column is login_alerts (snake_case), read the right key
+          setLoginAlerts(prefData?.preferences?.login_alerts ?? true);
         }
       } catch (err) {
         console.error("Failed to load security settings:", err);
@@ -119,9 +125,9 @@ const SecuritySettings = () => {
     try {
       setAlertsLoading(true);
       
+      // C2 FIX: use action field; C5 FIX: send snake_case key to match DB column
       const { error } = await supabase.functions.invoke('user-preferences', {
-        method: 'PATCH',
-        body: { loginAlerts: checked }
+        body: { action: 'update', login_alerts: checked }
       });
 
       if (error) throw new Error("Failed to update preferences");
@@ -135,8 +141,9 @@ const SecuritySettings = () => {
 
   const revokeSession = async (id) => {
     try {
-      const { error } = await supabase.functions.invoke(`auth-sessions/${id}`, { 
-        method: 'DELETE' 
+      // C2 FIX: dynamic function name was a 404; pass sessionId in body instead
+      const { error } = await supabase.functions.invoke('auth-sessions', {
+        body: { action: 'revoke', sessionId: id }
       });
 
       if (error) throw new Error("Failed to revoke session");
