@@ -27,12 +27,12 @@ export default function HeroSection () {
                     >
                         Start Investing
                     </Link> 
-                    <Link 
-                        to="/"
+                    <a 
+                        href="#securitySection"
                         className="rounded-xl border border-border px-8 py-3.5 font-body text-base font-medium text-text-light transition hover:border-accent hover:text-white"
                     >
                         Learn More
-                    </Link>
+                    </a>
                     </div>
                     
                     <div className="animate-pop-out [animation-delay:450ms] opacity-0 flex flex-wrap justify-center gap-3">

@@ -2,7 +2,7 @@ import { ShieldCheck } from "lucide-react";
 
 const SecuritySection = () => {
   return (
-    <section className="py-24">
+    <section id="securitySection" className="py-24">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
 
