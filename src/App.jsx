@@ -29,6 +29,7 @@ import AdminReferrals from './pages/admin/AdminReferrals';
 import AdminAuditLog from './pages/admin/AdminAuditLog';
 import ForgotPasswordPage from './pages/public/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/public/auth/ResetPasswordPage';
+import PlansPage from './pages/public/PlansPage';
 
 
 const App = () =>{
@@ -42,6 +43,7 @@ const App = () =>{
           <Route path="/about-us" element={<AboutPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/contact-us" element={<ContactPage />} />
+          <Route path="plans" element={<PlansPage />} />
           {/* Add more public pages here like <Route path="/about" element={<AboutPage />} /> */}
         </Route>
 

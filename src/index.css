@@ -6,6 +6,9 @@
   --color-primary-light: #0A67B3;
   --color-primary-lighter: #EAF4FF;
 
+  /* BG COLORS FOR INV PLANS */
+  --color-bronze: #cd7f32;
+
   --color-secondary: #051427;
   --color-secondary-light: rgb(5 20 39 / 95%);
   --color-secondary-soft: #1C3657;
@@ -26,13 +29,13 @@
   --color-danger: #DC2626;
   --color-danger-light: #FEE2E2;
 
-  /* Neutral - UPDATED FOR DARK MODE */
+  /* Neutral */
   --color-white: #FFFFFF;
   --color-background: #051427;
   --color-surface: #1C3657;
   --color-surface-alt: #0F233A;
 
-  /* Text - UPDATED FOR DARK MODE */
+  /* Text  */
   --color-heading: #FFFFFF;
   --color-text: #E2E8F0; 
   --color-text-light: #94A3B8; 

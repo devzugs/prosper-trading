@@ -9,6 +9,7 @@ import {
 import { supabase } from "../../../lib/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
 import useCryptoData from "../../../hooks/UseCryptoData";
+import { calculateTotalROI } from "../../../lib/roiCalculator";
 
 const fmtUSD = (n) =>
     `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -19,9 +20,10 @@ const Portfolio = () => {
     // Fetch live crypto prices
     const { coins, loading: cryptoLoading } = useCryptoData("bitcoin,ethereum,tether,binancecoin,solana,usd-coin");
 
-    // State for raw database rows
+    // State for raw database rows & profile details
     const [rawDeposits, setRawDeposits] = useState([]);
     const [rawAdjustments, setRawAdjustments] = useState([]);
+    const [profile, setProfile] = useState(null);
     const [dbLoading, setDbLoading] = useState(true);
 
     // 1. Fetch raw data from Supabase ONCE when the component mounts
@@ -32,9 +34,17 @@ const Portfolio = () => {
             setDbLoading(true);
 
             const [
+                { data: profileData, error: profileError },
                 { data: depositsData, error: depositsError },
                 { data: adjustmentsData, error: adjustmentsError }
             ] = await Promise.all([
+                // Fetch user's active plan details from profiles
+                supabase
+                    .from("profiles")
+                    .select("active_plan, plan_start_date")
+                    .eq("id", user.id)
+                    .single(),
+
                 // Fetch approved deposits for Portfolio Value
                 supabase
                     .from("deposits")
@@ -50,9 +60,11 @@ const Portfolio = () => {
                     .eq("type", "adjustment") 
             ]);
 
+            if (profileError) console.error("Error fetching profile plan:", profileError.message);
             if (depositsError) console.error("Error fetching deposits:", depositsError.message);
             if (adjustmentsError) console.error("Error fetching adjustments:", adjustmentsError.message);
 
+            setProfile(profileData || null);
             setRawDeposits(depositsData || []);
             setRawAdjustments(adjustmentsData || []);
             setDbLoading(false);
@@ -62,7 +74,7 @@ const Portfolio = () => {
     }, [user]);
 
     // 2. Calculate live USD values (Auto-updates when crypto prices change)
-    const { portfolioValue, availableBalance } = useMemo(() => {
+    const { portfolioValue, availableBalance, totalROI } = useMemo(() => {
         const getUsdValue = (amount, currencySymbol) => {
             const amt = Number(amount || 0);
             const sym = (currencySymbol || "USD").toLowerCase();
@@ -77,14 +89,24 @@ const Portfolio = () => {
             return liveCoin ? amt * liveCoin.current_price : amt;
         };
 
-        // Sum up USD value of all deposits
-        const portVal = rawDeposits.reduce((sum, dep) => sum + getUsdValue(dep.amount, dep.coin), 0);
+        // 1. Calculate base deposit value
+        const baseDepositValue = rawDeposits.reduce((sum, dep) => sum + getUsdValue(dep.amount, dep.coin), 0);
         
-        // Sum up USD value of all admin adjustments
+        // 2. Extract plan details safely from profile state
+        const plan = profile?.active_plan; 
+        const startDate = profile?.plan_start_date;
+
+        // 3. Calculate dynamic ROI using our Phase 1 utility
+        const calculatedROI = calculateTotalROI(baseDepositValue, plan, startDate);
+
+        // 4. Total Portfolio Value = Base Deposits + Accrued ROI
+        const portVal = baseDepositValue + calculatedROI;
+        
+        // Sum up admin adjustments
         const availBal = rawAdjustments.reduce((sum, adj) => sum + getUsdValue(adj.amount, adj.currency), 0);
 
-        return { portfolioValue: portVal, availableBalance: availBal };
-    }, [rawDeposits, rawAdjustments, coins]);
+        return { portfolioValue: portVal, availableBalance: availBal, totalROI: calculatedROI };
+    }, [rawDeposits, rawAdjustments, coins, profile]);
 
     const isLoading = dbLoading || cryptoLoading;
 
@@ -107,31 +129,38 @@ const Portfolio = () => {
                 </div>
                 {!isLoading && (
                     <p className="text-xs text-text-muted mt-1">
-                        {rawDeposits.length > 0
-                            ? `Across ${rawDeposits.length} approved deposit${rawDeposits.length !== 1 ? "s" : ""}`
-                            : "No approved deposits yet"}
+                        {profile?.active_plan 
+                            ? `Active Plan: ${profile.active_plan.toUpperCase()}`
+                            : rawDeposits.length > 0
+                                ? `Across ${rawDeposits.length} approved deposit${rawDeposits.length !== 1 ? "s" : ""}`
+                                : "No active investment plan"}
                     </p>
                 )}
             </div>
 
-            {/* 24H P&L (Placeholder) */}
+            {/* Total Accrued ROI */}
             <div className="bg-surface rounded-lg border border-border p-4 hover:border-accent/40 my-transition">
                 <div className="flex justify-between items-start mb-2">
-                    <p className="text-sm text-text-light mt-1">24H P&L</p>
+                    <p className="text-sm text-text-light mt-1">Total Profit (ROI)</p>
                     <span className="bg-accent/10 p-1.5 rounded-md">
                         <TrendingUp size={18} className="text-accent" />
                     </span>
                 </div>
                 <div className="flex items-baseline gap-2 mt-1">
-                    <h3 className="text-2xl sm:text-3xl font-bold text-success">+$0.00</h3>
-                    <div className="flex items-center gap-0.5 text-success">
-                        <TrendingUp size={14} />
-                        <span className="text-xs font-semibold">+0%</span>
-                    </div>
+                    {isLoading ? (
+                        <Loader2 size={22} className="animate-spin text-accent" />
+                    ) : (
+                        <h3 className="text-2xl sm:text-3xl font-bold text-success">+{fmtUSD(totalROI)}</h3>
+                    )}
                 </div>
+                {!isLoading && (
+                    <p className="text-xs text-text-muted mt-1">
+                        {profile?.active_plan ? "Accruing daily ROI" : "No plan selected"}
+                    </p>
+                )}
             </div>
 
-            {/* Total Trades (Placeholder) */}
+            {/* Total Trades */}
             <div className="bg-surface rounded-lg border border-border p-4 hover:border-accent/40 my-transition">
                 <div className="flex justify-between items-start mb-2">
                     <p className="text-sm text-text-light mt-1">Total Trades</p>

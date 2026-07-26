@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Search, Wallet, SlidersHorizontal, Loader2, X } from "lucide-react";
+import { Search, Wallet, SlidersHorizontal, Loader2, X, TrendingUp } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 
 const CURRENCIES = ["USD", "BTC", "ETH", "USDT"];
@@ -118,12 +118,126 @@ const AdjustBalanceModal = ({ user, onClose, onDone }) => {
   );
 };
 
+
+
+export const handleUpdateUserPlan = async (userId, newPlan) => {
+    
+    const { data, error } = await supabase
+        .from('profiles')
+        .update({
+            active_plan: newPlan,
+            // Reset the start date so the ROI calculation starts fresh from today
+            plan_start_date: new Date().toISOString() 
+        })
+        .eq('id', userId)
+        .select();
+
+    if (error) {
+        console.error("Error updating user plan:", error.message);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+};
+
+
+
+const UpdatePlanModal = ({ user, onClose, onDone }) => {
+  const [plan, setPlan] = useState(user.active_plan || "");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+
+    // If they select "None", we pass null to the database
+    const newPlan = plan === "" ? null : plan;
+    const newDate = plan === "" ? null : new Date().toISOString();
+
+    const { error: dbError } = await supabase
+      .from("profiles")
+      .update({
+        active_plan: newPlan,
+        plan_start_date: newDate,
+      })
+      .eq("id", user.id);
+
+    setSubmitting(false);
+
+    if (dbError) {
+      setError(dbError.message);
+      return;
+    }
+    onDone();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-surface w-full max-w-md rounded-2xl border border-border shadow-2xl p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold text-heading">Update Investment Plan</h2>
+          <button onClick={onClose} className="text-text-muted hover:text-text-light">
+            <X size={18} />
+          </button>
+        </div>
+        <p className="text-sm text-text-light mb-1">{user.full_name || "Unknown User"}</p>
+        <p className="text-xs text-text-muted mb-5">{user.email}</p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-text-muted uppercase tracking-wide">Select Plan</label>
+            <select
+              value={plan}
+              onChange={(e) => setPlan(e.target.value)}
+              className="mt-1 w-full bg-surface-alt border border-border rounded-lg px-3 py-2 text-sm text-text-light focus:outline-none focus:border-accent/50"
+            >
+              <option value="">None (Inactive)</option>
+              <option value="starter">Starter Plan (20%)</option>
+              <option value="growth">Growth Plan (40%)</option>
+              <option value="elite">Elite Plan (60%)</option>
+              <option value="supreme">Supreme Plan (80%)</option>
+            </select>
+          </div>
+          
+          <p className="text-xs text-text-muted">
+            Updating the plan will reset the <code className="text-accent">plan_start_date</code> to right now. 
+            Daily ROI calculations will restart from 0 for the new plan.
+          </p>
+
+          {error && <p className="text-sm text-danger">{error}</p>}
+          
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 rounded-lg border border-border text-sm font-semibold text-text-light hover:border-accent/40 my-transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 py-2 rounded-lg bg-accent text-secondary text-sm font-bold hover:bg-accent/90 my-transition disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {submitting && <Loader2 size={14} className="animate-spin" />}
+              Save Plan
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [walletsByUser, setWalletsByUser] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [modalUser, setModalUser] = useState(null);
+  const [planModalUser, setPlanModalUser] = useState(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -240,13 +354,20 @@ const AdminUsers = () => {
                       <td className="px-5 py-4 text-sm text-text-muted">
                         {new Date(u.created_at).toLocaleDateString()}
                       </td>
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-5 py-4 text-right flex flex-col items-end gap-2">
                         <button
                           onClick={() => setModalUser(u)}
                           className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent/80 my-transition"
                         >
                           <SlidersHorizontal size={13} />
                           Adjust Balance
+                        </button>
+                        <button
+                          onClick={() => setPlanModalUser(u)}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-500 hover:text-emerald-400 my-transition"
+                        >
+                          <TrendingUp size={13} />
+                          Update Plan
                         </button>
                       </td>
                     </tr>
@@ -265,6 +386,16 @@ const AdminUsers = () => {
           onDone={() => {
             setModalUser(null);
             fetchUsers();
+          }}
+        />
+      )}
+      {planModalUser && (
+        <UpdatePlanModal
+          user={planModalUser}
+          onClose={() => setPlanModalUser(null)}
+          onDone={() => {
+            setPlanModalUser(null);
+            fetchUsers(); // Refresh the list
           }}
         />
       )}

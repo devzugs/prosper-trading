@@ -8,7 +8,7 @@ import {
 // Public Links
 export const PUBLIC_NAV = [
   { label: "About Us", to: "/about-us" },
-  { label: "Trading", to: "/trading" },
+  { label: "Plans", to: "/plans" },
   { label: "FAQ", to: "/faq" },
   { label: "Contact Us", to: "/contact-us" },
 ];

@@ -1,11 +1,12 @@
-
 -- 1. New columns -------------------------------------------------------------
 alter table public.profiles
-  add column referral_code text unique;
+  add column if not exists referral_code text;
+
+create unique index if not exists profiles_referral_code_key
+  on public.profiles (referral_code);
 
 alter table public.referrals
-  add column commission_amount numeric(20,2) not null default 0;
-
+  add column if not exists commission_amount numeric(20,2) not null default 0;
 
 -- 2. Code generator -----------------------------------------------------------
 -- Short, human-shareable, collision-checked. 8 chars, uppercase base36.

@@ -1,14 +1,14 @@
 -- 1. Enhance Profiles Table
 alter table public.profiles
-  add column phone text,
-  add column avatar_url text,
+  add column if not exists phone text,
+  add column if not exists avatar_url text,
   -- C6 FIX: bio column was referenced in user-profile edge function but never created
-  add column bio text,
+  add column if not exists bio text,
   -- C4 FIX: is_deactivated was written by deactivate-account edge function but never created
-  add column is_deactivated boolean not null default false;
+  add column if not exists is_deactivated boolean not null default false;
 
 -- 2. Create User Preferences Table
-create table public.user_preferences (
+create table if not exists public.user_preferences (
   id uuid primary key references auth.users(id) on delete cascade,
   currency text default 'USD - US Dollar',
   language text default 'English',
@@ -19,12 +19,14 @@ create table public.user_preferences (
 );
 
 -- Use your existing trigger function to auto-update timestamps
+drop trigger if exists trg_user_preferences_updated_at on public.user_preferences;
+
 create trigger trg_user_preferences_updated_at
   before update on public.user_preferences
   for each row execute function public.set_updated_at();
 
 -- 3. Create User Sessions Table (For Security UI Tracking)
-create table public.user_sessions (
+create table if not exists public.user_sessions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   browser text,
@@ -37,7 +39,7 @@ create table public.user_sessions (
   is_current boolean default false
 );
 
-create index idx_user_sessions_user on public.user_sessions (user_id);
+create index if not exists idx_user_sessions_user on public.user_sessions (user_id);
 
 -- 4. Configure Avatars Storage Bucket
 insert into storage.buckets (id, name, public)
@@ -45,22 +47,25 @@ values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
 
 -- 5. Storage RLS Policies (Security)
+drop policy if exists "Avatars are publicly accessible." on storage.objects;
 create policy "Avatars are publicly accessible."
   on storage.objects for select
-  using ( bucket_id = 'avatars' );
+  using (bucket_id = 'avatars');
 
+drop policy if exists "Users can upload their own avatars." on storage.objects;
 create policy "Users can upload their own avatars."
   on storage.objects for insert
   to authenticated
-  with check ( 
-    bucket_id = 'avatars' and 
-    auth.uid()::text = (string_to_array(name, '/'))[1] 
+  with check (
+    bucket_id = 'avatars' and
+    auth.uid()::text = (string_to_array(name, '/'))[1]
   );
 
+drop policy if exists "Users can update their own avatars." on storage.objects;
 create policy "Users can update their own avatars."
   on storage.objects for update
   to authenticated
-  using ( 
-    bucket_id = 'avatars' and 
-    auth.uid()::text = (string_to_array(name, '/'))[1] 
+  using (
+    bucket_id = 'avatars' and
+    auth.uid()::text = (string_to_array(name, '/'))[1]
   );

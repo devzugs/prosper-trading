@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 export default function MobileNavigation({ isOpen, onClose }) {
   const navLinks = [
     "About Us",
-    "Trading",
+    "Plans",
     "FAQ",
     "Contact Us",
   ];
