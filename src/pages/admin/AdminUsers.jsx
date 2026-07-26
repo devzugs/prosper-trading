@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Search, Wallet, SlidersHorizontal, Loader2, X, TrendingUp } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+import useCryptoData from "../../hooks/UseCryptoData";
+import { calculateTotalROI, calculateTotalDaysActive } from "../../lib/roiCalculator";
 
 const CURRENCIES = ["USD", "BTC", "ETH", "USDT"];
 
@@ -146,31 +148,69 @@ const UpdatePlanModal = ({ user, onClose, onDone }) => {
   const [plan, setPlan] = useState(user.active_plan || "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  
+  // Fetch live crypto prices to calculate accurate USD deposit value
+  const { coins } = useCryptoData("bitcoin,ethereum,tether,binancecoin,solana,usd-coin");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
 
-    // If they select "None", we pass null to the database
-    const newPlan = plan === "" ? null : plan;
-    const newDate = plan === "" ? null : new Date().toISOString();
+    try {
+      // 1. Fetch user's approved deposits to calculate their base deposit value
+      const { data: deposits, error: depError } = await supabase
+        .from("deposits")
+        .select("amount, coin")
+        .eq("user_id", user.id)
+        .eq("status", "approved");
 
-    const { error: dbError } = await supabase
-      .from("profiles")
-      .update({
-        active_plan: newPlan,
-        plan_start_date: newDate,
-      })
-      .eq("id", user.id);
+      if (depError) throw depError;
 
-    setSubmitting(false);
+      // 2. Calculate the total USD base value of their deposits
+      const getUsdValue = (amount, currencySymbol) => {
+        const amt = Number(amount || 0);
+        const sym = (currencySymbol || "USD").toLowerCase();
+        if (sym === "usd" || sym === "usdt") return amt;
+        
+        const liveCoin = coins?.find(c => c.symbol.toLowerCase() === sym || c.id.toLowerCase() === sym);
+        return liveCoin ? amt * liveCoin.current_price : amt;
+      };
 
-    if (dbError) {
-      setError(dbError.message);
-      return;
+      const baseDepositValue = (deposits || []).reduce((sum, dep) => sum + getUsdValue(dep.amount, dep.coin), 0);
+
+      // 3. Snapshot the current ROI and Days before resetting
+      const currentPlan = user.active_plan;
+      const currentStartDate = user.plan_start_date;
+      const pastROI = user.accumulated_roi || 0;
+      const pastDays = user.accumulated_days || 0;
+
+      // Calculate what they've earned on the CURRENT plan + what they already had accumulated
+      const newAccumulatedROI = calculateTotalROI(baseDepositValue, currentPlan, currentStartDate, pastROI);
+      const newAccumulatedDays = calculateTotalDaysActive(currentStartDate, pastDays);
+
+      // 4. Update the database with the new plan and the newly calculated historical snapshots
+      const newPlanValue = plan === "" ? null : plan;
+      const newDateValue = plan === "" ? null : new Date().toISOString();
+
+      const { error: dbError } = await supabase
+        .from("profiles")
+        .update({
+          active_plan: newPlanValue,
+          plan_start_date: newDateValue,
+          accumulated_roi: newAccumulatedROI,
+          accumulated_days: newAccumulatedDays,
+        })
+        .eq("id", user.id);
+
+      if (dbError) throw dbError;
+
+      onDone();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
-    onDone();
   };
 
   return (
@@ -178,13 +218,14 @@ const UpdatePlanModal = ({ user, onClose, onDone }) => {
       <div className="bg-surface w-full max-w-md rounded-2xl border border-border shadow-2xl p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-heading">Update Investment Plan</h2>
-          <button onClick={onClose} className="text-text-muted hover:text-text-light">
+          <button onClick={onClose} className="text-text-muted hover:text-text-light my-transition">
             <X size={18} />
           </button>
         </div>
+        
         <p className="text-sm text-text-light mb-1">{user.full_name || "Unknown User"}</p>
         <p className="text-xs text-text-muted mb-5">{user.email}</p>
-
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-semibold text-text-muted uppercase tracking-wide">Select Plan</label>
@@ -201,11 +242,21 @@ const UpdatePlanModal = ({ user, onClose, onDone }) => {
             </select>
           </div>
           
-          <p className="text-xs text-text-muted">
-            Updating the plan will reset the <code className="text-accent">plan_start_date</code> to right now. 
-            Daily ROI calculations will restart from 0 for the new plan.
-          </p>
+          <div className="bg-surface-alt p-3 rounded-lg border border-border/50 space-y-1">
+             <p className="text-xs text-text-light flex justify-between">
+               <span>Current Accumulated ROI:</span>
+               <span className="font-mono text-success">${Number(user.accumulated_roi || 0).toFixed(2)}</span>
+             </p>
+             <p className="text-xs text-text-light flex justify-between">
+               <span>Current Days Active:</span>
+               <span className="font-mono text-accent">{user.accumulated_days || 0}</span>
+             </p>
+          </div>
 
+          <p className="text-xs text-text-muted">
+            Updating the plan will snapshot their current ROI and active days into their historical total, then reset the <code className="text-accent">plan_start_date</code> to right now.
+          </p>
+          
           {error && <p className="text-sm text-danger">{error}</p>}
           
           <div className="flex gap-2 pt-2">
@@ -244,7 +295,7 @@ const AdminUsers = () => {
     const [{ data: profiles, error: profilesError }, { data: wallets, error: walletsError }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, email, role, kyc_status, referral_code, created_at")
+        .select("id, full_name, email, role, kyc_status, referral_code, created_at, active_plan, plan_start_date, accumulated_roi, accumulated_days")
         .order("created_at", { ascending: false }),
       supabase.from("wallets").select("user_id, currency, cached_balance"),
     ]);

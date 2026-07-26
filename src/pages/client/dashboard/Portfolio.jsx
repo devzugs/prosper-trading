@@ -38,10 +38,9 @@ const Portfolio = () => {
                 { data: depositsData, error: depositsError },
                 { data: adjustmentsData, error: adjustmentsError }
             ] = await Promise.all([
-                // Fetch user's active plan details from profiles
                 supabase
                     .from("profiles")
-                    .select("active_plan, plan_start_date")
+                    .select("active_plan, plan_start_date, accumulated_roi, accumulated_days")
                     .eq("id", user.id)
                     .single(),
 
@@ -57,7 +56,7 @@ const Portfolio = () => {
                     .from("transactions")
                     .select("amount, currency")
                     .eq("user_id", user.id)
-                    .eq("type", "adjustment") 
+                    .eq("type", "adjustment")
             ]);
 
             if (profileError) console.error("Error fetching profile plan:", profileError.message);
@@ -92,17 +91,18 @@ const Portfolio = () => {
         // 1. Calculate base deposit value
         const baseDepositValue = rawDeposits.reduce((sum, dep) => sum + getUsdValue(dep.amount, dep.coin), 0);
         
-        // 2. Extract plan details safely from profile state
+        // 2. Extract plan details and historical data safely from profile state
         const plan = profile?.active_plan; 
         const startDate = profile?.plan_start_date;
+        const pastROI = profile?.accumulated_roi || 0;
 
-        // 3. Calculate dynamic ROI using our Phase 1 utility
-        const calculatedROI = calculateTotalROI(baseDepositValue, plan, startDate);
+        // 3. Calculate dynamic ROI (Current active ROI + Historical ROI)
+        const calculatedROI = calculateTotalROI(baseDepositValue, plan, startDate, pastROI);
 
         // 4. Total Portfolio Value = Base Deposits + Accrued ROI
         const portVal = baseDepositValue + calculatedROI;
-        
-        // Sum up admin adjustments
+
+        // 5. Sum up admin adjustments for Available Balance
         const availBal = rawAdjustments.reduce((sum, adj) => sum + getUsdValue(adj.amount, adj.currency), 0);
 
         return { portfolioValue: portVal, availableBalance: availBal, totalROI: calculatedROI };

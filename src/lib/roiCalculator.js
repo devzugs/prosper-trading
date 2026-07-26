@@ -2,7 +2,7 @@
 
 /**
  * SHARED DATE COMPONENT
- * Calculates the number of full days passed since the plan started.
+ * Calculates the number of full days passed since the current plan started.
  */
 export const calculateDaysActive = (startDate) => {
     if (!startDate) return 0;
@@ -23,22 +23,22 @@ export const calculateDaysActive = (startDate) => {
  * returning the accrued ROI based on InvestmentPlans.jsx percentages.
  */
 
-// Starter Plan: 20% Daily[cite: 2]
+// Starter Plan: 20% Daily
 export const calculateStarterROI = (depositValue, days) => {
     return depositValue * 0.20 * days;
 };
 
-// Growth Plan: 40% Daily[cite: 2]
+// Growth Plan: 40% Daily
 export const calculateGrowthROI = (depositValue, days) => {
     return depositValue * 0.40 * days;
 };
 
-// Elite Plan: 60% Daily[cite: 2]
+// Elite Plan: 60% Daily
 export const calculateEliteROI = (depositValue, days) => {
     return depositValue * 0.60 * days;
 };
 
-// Supreme Plan: 80% Daily[cite: 2]
+// Supreme Plan: 80% Daily
 export const calculateSupremeROI = (depositValue, days) => {
     return depositValue * 0.80 * days;
 };
@@ -46,15 +46,28 @@ export const calculateSupremeROI = (depositValue, days) => {
 /**
  * MASTER ROUTER
  * Routes the user to the correct calculation based on their active plan.
+ * Now adds previously accumulated ROI and Days.
  */
-export const calculateTotalROI = (depositValue, plan, startDate) => {
-    const days = calculateDaysActive(startDate);
+export const calculateTotalROI = (depositValue, plan, startDate, accumulatedROI = 0) => {
+    const currentDays = calculateDaysActive(startDate);
     
+    let currentROI = 0;
     switch (plan?.toLowerCase()) {
-        case 'starter': return calculateStarterROI(depositValue, days);
-        case 'growth': return calculateGrowthROI(depositValue, days);
-        case 'elite': return calculateEliteROI(depositValue, days);
-        case 'supreme': return calculateSupremeROI(depositValue, days);
-        default: return 0;
+        case 'starter': currentROI = calculateStarterROI(depositValue, currentDays); break;
+        case 'growth': currentROI = calculateGrowthROI(depositValue, currentDays); break;
+        case 'elite': currentROI = calculateEliteROI(depositValue, currentDays); break;
+        case 'supreme': currentROI = calculateSupremeROI(depositValue, currentDays); break;
+        default: currentROI = 0;
     }
+
+    // Add historical ROI to the newly accruing ROI
+    return currentROI + Number(accumulatedROI);
+};
+
+/**
+ * HELPER: TOTAL DAYS
+ * Returns the total days active across all historical plans.
+ */
+export const calculateTotalDaysActive = (startDate, accumulatedDays = 0) => {
+    return calculateDaysActive(startDate) + Number(accumulatedDays);
 };
