@@ -1,7 +1,13 @@
 import React from "react";
-import { MessageSquare } from "lucide-react";
+import { MessageCircle, Send } from "lucide-react";
 
-const ContactAdminSection = ({ adminPhone = "+1234567890" }) => {
+const ContactAdminSection = ({
+  adminPhone = "+1 (262) 215‑7836",
+  telegramUsername = "infoadministrate",
+}) => {
+  // Remove any spaces or special characters for WhatsApp link
+  const whatsappNumber = adminPhone.replace(/[^\d]/g, "");
+
   return (
     <div className="bg-surface-alt flex flex-col items-center justify-between gap-4 rounded-xl border border-border p-6 text-center sm:flex-row sm:text-left">
       <div>
@@ -9,17 +15,32 @@ const ContactAdminSection = ({ adminPhone = "+1234567890" }) => {
           Contact Support
         </h3>
         <p className="text-xs text-text-muted">
-          Need help right away? Send a direct text message to our admin team for a faster resolution.
+          Need help right away? Reach out to our admin team on WhatsApp or
+          Telegram for a faster resolution.
         </p>
       </div>
 
-      <a
-        href={`sms:${adminPhone}`}
-        className="my-transition flex shrink-0 items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-secondary shadow-lg shadow-accent/20 hover:bg-accent-light"
-      >
-        <MessageSquare size={16} />
-        Text Admin
-      </a>
+      <div className="flex shrink-0 gap-3">
+        <a
+          href={`https://wa.me/${whatsappNumber}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="my-transition flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg hover:bg-green-700"
+        >
+          <MessageCircle size={16} />
+          WhatsApp
+        </a>
+
+        <a
+          href={`https://t.me/${telegramUsername}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="my-transition flex items-center gap-2 rounded-lg bg-sky-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg hover:bg-sky-600"
+        >
+          <Send size={16} />
+          Telegram
+        </a>
+      </div>
     </div>
   );
 };
