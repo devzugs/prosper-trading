@@ -115,7 +115,7 @@ const Portfolio = () => {
             {/* Portfolio Value */}
             <div className="bg-surface-alt rounded-lg border border-border p-4 hover:border-accent/40 my-transition">
                 <div className="flex justify-between items-start mb-2">
-                    <p className="text-sm text-text-light mt-1">Portfolio Value</p>
+                    <p className="text-sm text-text-light mt-1">Portfolio Balance</p>
                     <span className="bg-accent/10 p-1.5 rounded-md">
                         <DollarSign size={18} className="text-accent" />
                     </span>

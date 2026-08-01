@@ -24,7 +24,7 @@ const TYPE_CONFIG = {
     withdrawal:     { label: "Withdrawal",      icon: ArrowUpRight,       iconColor: "text-danger",  bgColor: "bg-danger/10"  },
     referral_bonus: { label: "Referral Bonus",  icon: Gift,               iconColor: "text-accent",  bgColor: "bg-accent/10"  },
     roi_payout:     { label: "ROI Payout",      icon: TrendingUp,         iconColor: "text-success", bgColor: "bg-success/10" },
-    adjustment:     { label: "Adjustment",      icon: SlidersHorizontal,  iconColor: "text-accent",  bgColor: "bg-accent/10"  },
+    adjustment:     { label: "ROI",            icon: SlidersHorizontal,  iconColor: "text-accent",  bgColor: "bg-accent/10"  },
     fee:            { label: "Fee",             icon: ReceiptText,        iconColor: "text-danger",  bgColor: "bg-danger/10"  },
 };
 
