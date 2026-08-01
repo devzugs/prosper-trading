@@ -1,5 +1,4 @@
 // ─── Static coin data ─────────────────────────────────────────────────────────
-// Swap mock addresses for real ones from your backend
 const Coins = [
     {
         id: "bitcoin",
@@ -7,7 +6,7 @@ const Coins = [
         name: "Bitcoin",
         image: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png",
         network: "Bitcoin Network",
-        address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+        address: "bc1qs9ry030sxak7glydad57k0j5drq43dxr2efvhg",
         minDeposit: "0.0001 BTC",
         confirmations: 2,
     },
@@ -17,7 +16,7 @@ const Coins = [
         name: "Ethereum",
         image: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
         network: "Ethereum (ERC-20)",
-        address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+        address: "0x46B93a9B1F8945E3b60d4f940C36A96398d0092B",
         minDeposit: "0.01 ETH",
         confirmations: 12,
     },
@@ -27,7 +26,7 @@ const Coins = [
         name: "Tether",
         image: "https://assets.coingecko.com/coins/images/325/small/Tether.png",
         network: "Tron (TRC-20)", 
-        address: "TR71C7656EC7ab88b098defB751B7401B5f6d8976F",
+        address: "THUVhXrd1ohR4yZZVWoyKNdF6HNcs2hQyH",
         minDeposit: "10 USDT",
         confirmations: 12,
     },
@@ -37,7 +36,7 @@ const Coins = [
         name: "BNB",
         image: "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png",
         network: "BNB Smart Chain (BEP-20)",
-        address: "bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2",
+        address: "0x46B93a9B1F8945E3b60d4f940C36A96398d0092B",
         minDeposit: "0.01 BNB",
         confirmations: 15,
     },
@@ -47,7 +46,7 @@ const Coins = [
         name: "Solana",
         image: "https://assets.coingecko.com/coins/images/4128/small/solana.png",
         network: "Solana Network",
-        address: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+        address: "9hRZrJxWQhgYtQeEmZgYsAWvAi3TPjoUdHoqaqHxCUQv",
         minDeposit: "0.01 SOL",
         confirmations: 32,
     },
