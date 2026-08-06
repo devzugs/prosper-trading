@@ -5,7 +5,6 @@ import { useAuth } from "../../../context/AuthContext";
 
 const StepVerify = ({ activeMethod, selectedCoin, amount, onBack, onReset }) => {
     const { user } = useAuth();
-
     const [txHash, setTxHash] = useState("");
     const [file, setFile] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +28,7 @@ const StepVerify = ({ activeMethod, selectedCoin, amount, onBack, onReset }) => 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!txHash) return setFeedback({ type: 'error', message: "Transaction hash is required." });
+        if (!txHash) return setFeedback({ type: 'error', message: "Transaction reference ID is required." });
         if (!file) return setFeedback({ type: 'error', message: "Please upload a proof of payment." });
 
         setIsSubmitting(true);
@@ -38,7 +37,7 @@ const StepVerify = ({ activeMethod, selectedCoin, amount, onBack, onReset }) => 
         try {
             const fileExt = file.name.split('.').pop();
             const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-            const filePath = `${user.id}/${fileName}`; 
+            const filePath = `${user.id}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('deposit-proofs')
@@ -52,7 +51,7 @@ const StepVerify = ({ activeMethod, selectedCoin, amount, onBack, onReset }) => 
                     user_id: user.id,
                     coin: selectedCoin.name,
                     network: selectedCoin.network || activeMethod.label,
-                    amount: parseFloat(amount), // Passed as a prop now
+                    amount: parseFloat(amount),
                     tx_hash: txHash,
                     proof_url: filePath,
                     status: 'pending'
@@ -68,12 +67,23 @@ const StepVerify = ({ activeMethod, selectedCoin, amount, onBack, onReset }) => 
             setTimeout(() => {
                 onReset();
             }, 3000);
-
         } catch (error) {
             setFeedback({ type: 'error', message: error.message });
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const getRefLabel = () => {
+        if (activeMethod.id === 'iban') return "Bank Reference / Wire ID";
+        if (activeMethod.id === 'paypal') return "PayPal Transaction ID";
+        return "Transaction Hash";
+    };
+
+    const getRefPlaceholder = () => {
+        if (activeMethod.id === 'iban') return "e.g. REF-9876543210";
+        if (activeMethod.id === 'paypal') return "e.g. 5TP12345678901234";
+        return "Enter the TX hash or reference ID";
     };
 
     return (
@@ -92,17 +102,19 @@ const StepVerify = ({ activeMethod, selectedCoin, amount, onBack, onReset }) => 
             </div>
 
             <div className="bg-surface-alt border border-border rounded-xl p-4 mb-6">
-                <p className="text-sm text-text-muted">You are verifying a deposit of <strong className="text-text-light">{amount} {selectedCoin.symbol}</strong> via {activeMethod.label}.</p>
+                <p className="text-sm text-text-muted">
+                    You are verifying a deposit of <strong className="text-text-light">{amount} {selectedCoin.symbol}</strong> via {activeMethod.label}.
+                </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4 mb-6">
                 <div>
-                    <label className="block text-sm font-medium text-text-light mb-1">Transaction Hash</label>
+                    <label className="block text-sm font-medium text-text-light mb-1">{getRefLabel()}</label>
                     <input 
                         type="text" 
                         value={txHash}
                         onChange={(e) => setTxHash(e.target.value)}
-                        placeholder="Enter the TX hash or reference ID"
+                        placeholder={getRefPlaceholder()}
                         className="w-full bg-surface-alt border border-border rounded-lg px-4 py-2.5 text-text-light focus:outline-none focus:border-accent my-transition"
                         disabled={isSubmitting || feedback?.type === 'success'}
                         required

@@ -1,9 +1,5 @@
-import { CreditCard,
-        Building2,
-        Wallet,
-    } from "lucide-react";
+import { CreditCard, Building2, Wallet, Send } from "lucide-react";
 
-// ─── Deposit method config ────────────────────────────────────────────────────
 const DepositMethods = [
     {
         id: "card",
@@ -18,16 +14,39 @@ const DepositMethods = [
         provider: "paybis",
     },
     {
-        id: "bank",
-        label: "Bank Transfer",
-        subtext: "Send via bank transfer or SEPA through MoonPay",
+        id: "iban",
+        label: "Bank Transfer (IBAN)",
+        subtext: "Direct SEPA / Wire transfer to our official bank account",
         icon: Building2,
         accent: "text-warning",
         bg: "bg-warning/10",
         border: "hover:border-warning/40",
-        tag: "1–3 days",
+        tag: "1-3 days",
         tagColor: "bg-warning/10 text-warning",
-        provider: "moonpay",
+        provider: null,
+        details: {
+            bankName: "Marko Coric",
+            accountName: "Marko Coric",
+            iban: "DE44 1001 00100078 0861 18",
+            bicSwift: "PBNKDEFFXXX",
+        },
+    },
+    {
+        id: "paypal",
+        label: "PayPal",
+        subtext: "Instant transfer via PayPal to our dedicated account",
+        icon: Send,
+        accent: "text-accent",
+        bg: "bg-accent/10",
+        border: "hover:border-accent/40",
+        tag: "Instant",
+        tagColor: "bg-success/10 text-success",
+        provider: null,
+        details: {
+            email: "markocoric690@gmail.com",
+            paypalMe: "https://paypal.me/markocoric",
+            note: "*Note: Send through 'Friends and Family' option only.",
+        },
     },
     {
         id: "wallet",
