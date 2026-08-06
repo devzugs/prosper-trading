@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
     ArrowUpRight,
@@ -11,15 +11,14 @@ import {
     ArrowRight,
     ScrollText,
 } from "lucide-react";
-
-// ─── Config — mirrors transactions.type / .status check constraints in the DB ─
+import TransactionReceiptModal from "./TransactionReceiptModal";
 
 const TYPE_CONFIG = {
     deposit:        { label: "Deposit",       icon: ArrowDownLeft,     iconColor: "text-success", bgColor: "bg-success/10" },
     withdrawal:     { label: "Withdrawal",     icon: ArrowUpRight,      iconColor: "text-danger",  bgColor: "bg-danger/10"  },
     referral_bonus: { label: "Referral Bonus", icon: Gift,              iconColor: "text-accent",  bgColor: "bg-accent/10"  },
     roi_payout:     { label: "ROI Payout",     icon: TrendingUp,        iconColor: "text-success", bgColor: "bg-success/10" },
-    adjustment:     { label: "Adjustment",     icon: SlidersHorizontal, iconColor: "text-accent",  bgColor: "bg-accent/10"  },
+     adjustment:     { label: "ROI",            icon: SlidersHorizontal,  iconColor: "text-accent",  bgColor: "bg-accent/10"  },
     fee:            { label: "Fee",            icon: ReceiptText,       iconColor: "text-danger",  bgColor: "bg-danger/10"  },
 };
 
@@ -45,22 +44,14 @@ function fmtAmount(amount, currency) {
     return `${sign}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 })} ${currency}`;
 }
 
-// ─── Dashboard Widget ─────────────────────────────────────────────────────────
-// Pass `transactions` as a prop — rows straight from the `transactions` table
-// (id, type, currency, amount, status, created_at). Sorted newest-first by
-// the caller; this widget just slices the 4 most recent.
-
 const TransactionHistoryWidget = ({ transactions = [], totalCount }) => {
-    // `totalCount` lets the caller pass just the 4 rows this widget renders
-    // while still reporting the true total (e.g. via a separate count query),
-    // rather than forcing a full-history fetch just to size a "N total" label.
+    const [selectedTx, setSelectedTx] = useState(null);
     const total = totalCount ?? transactions.length;
     const recent = transactions.slice(0, 4);
     const isEmpty = total === 0;
 
     return (
         <div className="p-6">
-            {/* ── Header ── */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                     <span className="bg-accent/10 p-2 rounded-lg">
@@ -89,7 +80,6 @@ const TransactionHistoryWidget = ({ transactions = [], totalCount }) => {
                 )}
             </div>
 
-            {/* ── Empty State ── */}
             {isEmpty ? (
                 <div className="flex flex-col sm:flex-row items-center justify-between p-5 bg-surface-alt rounded-xl border border-border border-dashed gap-4">
                     <div className="flex items-center gap-4 text-center sm:text-left">
@@ -115,7 +105,6 @@ const TransactionHistoryWidget = ({ transactions = [], totalCount }) => {
                 </div>
             ) : (
                 <>
-                    {/* ── Table — md+ ── */}
                     <div className="hidden md:block bg-surface-alt rounded-xl border border-border overflow-hidden">
                         <table className="w-full">
                             <thead>
@@ -132,34 +121,31 @@ const TransactionHistoryWidget = ({ transactions = [], totalCount }) => {
                             </thead>
                             <tbody>
                                 {recent.map((tx, i) => {
-                                    const cfg         = TYPE_CONFIG[tx.type] || TYPE_CONFIG.adjustment;
-                                    const Icon        = cfg.icon;
-                                    const statusCfg   = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
+                                    const cfg = TYPE_CONFIG[tx.type] || TYPE_CONFIG.adjustment;
+                                    const Icon = cfg.icon;
+                                    const statusCfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
                                     const amountColor = Number(tx.amount) >= 0 ? "text-success" : "text-danger";
                                     return (
                                         <tr
                                             key={tx.id}
-                                            className={`border-b border-border/50 last:border-0 hover:bg-surface my-transition ${i % 2 !== 0 ? "bg-secondary/20" : ""}`}
+                                            onClick={() => setSelectedTx(tx)}
+                                            className={`border-b border-border/50 last:border-0 hover:bg-surface my-transition cursor-pointer ${i % 2 !== 0 ? "bg-secondary/20" : ""}`}
                                         >
-                                            {/* Type */}
                                             <td className="px-5 py-4">
                                                 <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md ${cfg.bgColor}`}>
                                                     <Icon size={12} className={cfg.iconColor} />
                                                     <span className={`text-xs font-semibold ${cfg.iconColor}`}>{cfg.label}</span>
                                                 </div>
                                             </td>
-                                            {/* Amount */}
                                             <td className="px-5 py-4 text-right">
                                                 <span className={`text-sm font-bold tabular-nums ${amountColor}`}>
                                                     {fmtAmount(tx.amount, tx.currency)}
                                                 </span>
                                             </td>
-                                            {/* Date */}
                                             <td className="px-5 py-4 text-right">
                                                 <p className="text-sm text-text-light">{formatDate(tx.created_at)}</p>
                                                 <p className="text-xs text-text-muted">{formatTime(tx.created_at)}</p>
                                             </td>
-                                            {/* Status */}
                                             <td className="px-5 py-4 text-right">
                                                 <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${statusCfg.className}`}>
                                                     {statusCfg.label}
@@ -172,17 +158,17 @@ const TransactionHistoryWidget = ({ transactions = [], totalCount }) => {
                         </table>
                     </div>
 
-                    {/* ── Card list — mobile ── */}
                     <div className="flex flex-col gap-3 md:hidden">
                         {recent.map((tx) => {
-                            const cfg         = TYPE_CONFIG[tx.type] || TYPE_CONFIG.adjustment;
-                            const Icon        = cfg.icon;
-                            const statusCfg   = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
+                            const cfg = TYPE_CONFIG[tx.type] || TYPE_CONFIG.adjustment;
+                            const Icon = cfg.icon;
+                            const statusCfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
                             const amountColor = Number(tx.amount) >= 0 ? "text-success" : "text-danger";
                             return (
                                 <div
                                     key={tx.id}
-                                    className="bg-surface-alt rounded-xl border border-border p-4 flex items-center gap-4 hover:border-accent/30 my-transition"
+                                    onClick={() => setSelectedTx(tx)}
+                                    className="bg-surface-alt rounded-xl border border-border p-4 flex items-center gap-4 hover:border-accent/30 my-transition cursor-pointer"
                                 >
                                     <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${cfg.bgColor}`}>
                                         <Icon size={16} className={cfg.iconColor} />
@@ -206,7 +192,6 @@ const TransactionHistoryWidget = ({ transactions = [], totalCount }) => {
                         })}
                     </div>
 
-                    {/* ── Footer ── */}
                     {total > 4 && (
                         <div className="flex justify-between items-center mt-4 text-xs text-text-muted">
                             <span>Showing 4 of {total} transactions</span>
@@ -220,6 +205,11 @@ const TransactionHistoryWidget = ({ transactions = [], totalCount }) => {
                     )}
                 </>
             )}
+
+            <TransactionReceiptModal 
+                transaction={selectedTx} 
+                onClose={() => setSelectedTx(null)} 
+            />
         </div>
     );
 };

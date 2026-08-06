@@ -17,18 +17,17 @@ import {
 } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
+import TransactionReceiptModal from "./TransactionReceiptModal";
 
-// ─── Config — mirrors transactions.type check constraint in the DB ────────────
 const TYPE_CONFIG = {
     deposit:        { label: "Deposit",        icon: ArrowDownLeft,      iconColor: "text-success", bgColor: "bg-success/10" },
-    withdrawal:     { label: "Withdrawal",      icon: ArrowUpRight,       iconColor: "text-danger",  bgColor: "bg-danger/10"  },
-    referral_bonus: { label: "Referral Bonus",  icon: Gift,               iconColor: "text-accent",  bgColor: "bg-accent/10"  },
-    roi_payout:     { label: "ROI Payout",      icon: TrendingUp,         iconColor: "text-success", bgColor: "bg-success/10" },
+    withdrawal:     { label: "Withdrawal",     icon: ArrowUpRight,       iconColor: "text-danger",  bgColor: "bg-danger/10"  },
+    referral_bonus: { label: "Referral Bonus", icon: Gift,               iconColor: "text-accent",  bgColor: "bg-accent/10"  },
+    roi_payout:     { label: "ROI Payout",     icon: TrendingUp,         iconColor: "text-success", bgColor: "bg-success/10" },
     adjustment:     { label: "ROI",            icon: SlidersHorizontal,  iconColor: "text-accent",  bgColor: "bg-accent/10"  },
-    fee:            { label: "Fee",             icon: ReceiptText,        iconColor: "text-danger",  bgColor: "bg-danger/10"  },
+    fee:            { label: "Fee",            icon: ReceiptText,        iconColor: "text-danger",  bgColor: "bg-danger/10"  },
 };
 
-// mirrors transactions.status check constraint
 const STATUS_CONFIG = {
     completed: { label: "Completed", className: "bg-success/10 text-success", icon: CheckCircle2 },
     pending:   { label: "Pending",   className: "bg-warning/15 text-warning", icon: Clock3       },
@@ -46,11 +45,10 @@ function formatTime(iso) {
 }
 function fmtAmount(amount, currency) {
     const n = Number(amount);
-    const sign = n > 0 ? "+" : n < 0 ? "" : ""; // negative already carries its own "-"
+    const sign = n > 0 ? "+" : n < 0 ? "" : "";
     return `${sign}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 })} ${currency}`;
 }
 
-// ─── Empty state ──────────────────────────────────────────────────────────────
 const EmptyState = ({ hasFilters, onReset }) => (
     <div className="flex flex-col items-center justify-center py-20 px-6 gap-4">
         <div className="bg-accent/10 p-5 rounded-full">
@@ -77,7 +75,6 @@ const EmptyState = ({ hasFilters, onReset }) => (
     </div>
 );
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 const TransactionHistoryPage = () => {
     const { user } = useAuth();
     const [transactions, setTransactions] = useState([]);
@@ -89,6 +86,7 @@ const TransactionHistoryPage = () => {
     const [sortKey,      setSortKey]      = useState("date");
     const [sortDir,      setSortDir]      = useState("desc");
     const [page,         setPage]         = useState(1);
+    const [selectedTx,   setSelectedTx]   = useState(null);
 
     useEffect(() => {
         if (!user) return;
@@ -96,11 +94,10 @@ const TransactionHistoryPage = () => {
         const fetchTransactions = async () => {
             setLoading(true);
             
-            // Fetch completed/reversed from the ledger, and pending from deposits/withdrawals
             const [txRes, depRes, withRes] = await Promise.all([
                 supabase
                     .from("transactions")
-                    .select("id, type, currency, amount, status, note, created_at")
+                    .select("id, type, currency, amount, status, note, created_at, reference_table, reference_id")
                     .eq("user_id", user.id)
                     .order("created_at", { ascending: false }),
                 supabase
@@ -119,30 +116,30 @@ const TransactionHistoryPage = () => {
                 console.error("Error fetching transactions:", txRes.error || depRes.error || withRes.error);
                 setLoadError("Couldn't load your transaction history. Please try again.");
             } else {
-                // Normalize pending deposits to match the transactions schema
                 const pendingDeposits = (depRes.data || []).map(d => ({
                     id: d.id,
                     type: "deposit",
-                    currency: d.coin, // The deposits table uses 'coin' instead of 'currency'
+                    currency: d.coin,
                     amount: d.amount,
                     status: d.status,
                     note: "Pending admin review",
-                    created_at: d.created_at
+                    created_at: d.created_at,
+                    reference_table: "deposits",
+                    reference_id: d.id
                 }));
 
-                // Normalize pending withdrawals
                 const pendingWithdrawals = (withRes.data || []).map(w => ({
                     id: w.id,
                     type: "withdrawal",
                     currency: w.currency,
-                    // The ledger tracks withdrawals as negative values, so we mirror that here
                     amount: -Math.abs(w.amount), 
                     status: w.status,
                     note: "Pending admin review",
-                    created_at: w.created_at
+                    created_at: w.created_at,
+                    reference_table: "withdrawals",
+                    reference_id: w.id
                 }));
 
-                // Merge all records and sort them by date descending
                 const allTransactions = [...(txRes.data || []), ...pendingDeposits, ...pendingWithdrawals];
                 allTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -206,8 +203,6 @@ const TransactionHistoryPage = () => {
 
     return (
         <div className="min-h-screen">
-
-            {/* ── Header ──────────────────────────────────────────────────── */}
             <div className="p-6 pb-4">
                 <h1 className="text-2xl sm:text-3xl font-bold text-heading">
                     Transaction History
@@ -217,11 +212,8 @@ const TransactionHistoryPage = () => {
                 </p>
             </div>
 
-            {/* ── Filters ─────────────────────────────────────────────────── */}
             {!loading && transactions.length > 0 && (
                 <div className="px-6 pb-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-
-                    {/* Status pills */}
                     <div className="flex gap-1.5 flex-wrap">
                         {STATUS_FILTERS.map(f => (
                             <button
@@ -238,7 +230,6 @@ const TransactionHistoryPage = () => {
                         ))}
                     </div>
 
-                    {/* Search */}
                     <div className="relative">
                         <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
                         <input
@@ -252,10 +243,8 @@ const TransactionHistoryPage = () => {
                 </div>
             )}
 
-            {/* ── Table ───────────────────────────────────────────────────── */}
             <div className="px-6 pb-6">
                 <div className="bg-surface-alt rounded-xl border border-border overflow-hidden">
-
                     {loading ? (
                         <div className="flex justify-center py-20">
                             <Loader2 className="animate-spin text-accent" />
@@ -264,16 +253,15 @@ const TransactionHistoryPage = () => {
                         <p className="text-sm text-danger text-center py-20">{loadError}</p>
                     ) : (
                         <>
-                            {/* Desktop */}
                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
                                         <tr className="border-b border-border">
-                                            <th className="text-left    px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider">Type</th>
-                                            <th className="text-left   px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider">Note</th>
-                                            <th className="text-right  px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider"><SortBtn col="amount" label="Amount" /></th>
-                                            <th className="text-right  px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider"><SortBtn col="date"   label="Date"   /></th>
-                                            <th className="text-right  px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+                                            <th className="text-left px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider">Type</th>
+                                            <th className="text-left px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider">Note</th>
+                                            <th className="text-right px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider"><SortBtn col="amount" label="Amount" /></th>
+                                            <th className="text-right px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider"><SortBtn col="date" label="Date" /></th>
+                                            <th className="text-right px-5 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -285,15 +273,16 @@ const TransactionHistoryPage = () => {
                                             </tr>
                                         ) : (
                                             paginated.map((tx, i) => {
-                                                const cfg        = TYPE_CONFIG[tx.type] || TYPE_CONFIG.adjustment;
-                                                const TypeIcon   = cfg.icon;
-                                                const statusCfg  = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
+                                                const cfg = TYPE_CONFIG[tx.type] || TYPE_CONFIG.adjustment;
+                                                const TypeIcon = cfg.icon;
+                                                const statusCfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
                                                 const StatusIcon = statusCfg.icon;
                                                 const amountColor = Number(tx.amount) >= 0 ? "text-success" : "text-danger";
                                                 return (
                                                     <tr
                                                         key={tx.id}
-                                                        className={`border-b border-border/50 last:border-0 hover:bg-surface my-transition ${i % 2 !== 0 ? "bg-secondary/20" : ""}`}
+                                                        onClick={() => setSelectedTx(tx)}
+                                                        className={`border-b border-border/50 last:border-0 hover:bg-surface my-transition cursor-pointer ${i % 2 !== 0 ? "bg-secondary/20" : ""}`}
                                                     >
                                                         <td className="px-5 py-4">
                                                             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md ${cfg.bgColor}`}>
@@ -327,18 +316,21 @@ const TransactionHistoryPage = () => {
                                 </table>
                             </div>
 
-                            {/* Mobile */}
                             <div className="flex flex-col md:hidden divide-y divide-border/50">
                                 {isEmpty ? (
                                     <EmptyState hasFilters={hasActiveFilters} onReset={resetFilters} />
                                 ) : (
                                     paginated.map((tx) => {
-                                        const cfg        = TYPE_CONFIG[tx.type] || TYPE_CONFIG.adjustment;
-                                        const TypeIcon   = cfg.icon;
-                                        const statusCfg  = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
+                                        const cfg = TYPE_CONFIG[tx.type] || TYPE_CONFIG.adjustment;
+                                        const TypeIcon = cfg.icon;
+                                        const statusCfg = STATUS_CONFIG[tx.status] || STATUS_CONFIG.pending;
                                         const amountColor = Number(tx.amount) >= 0 ? "text-success" : "text-danger";
                                         return (
-                                            <div key={tx.id} className="p-4 flex items-center gap-4 hover:bg-surface my-transition">
+                                            <div 
+                                                key={tx.id} 
+                                                onClick={() => setSelectedTx(tx)}
+                                                className="p-4 flex items-center gap-4 hover:bg-surface my-transition cursor-pointer"
+                                            >
                                                 <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${cfg.bgColor}`}>
                                                     <TypeIcon size={16} className={cfg.iconColor} />
                                                 </div>
@@ -362,7 +354,6 @@ const TransactionHistoryPage = () => {
                                 )}
                             </div>
 
-                            {/* Pagination */}
                             {!isEmpty && (
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-border">
                                     <span className="text-xs text-text-muted">
@@ -424,6 +415,11 @@ const TransactionHistoryPage = () => {
                     )}
                 </div>
             </div>
+
+            <TransactionReceiptModal 
+                transaction={selectedTx} 
+                onClose={() => setSelectedTx(null)} 
+            />
         </div>
     );
 };
