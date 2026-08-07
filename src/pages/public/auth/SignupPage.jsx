@@ -150,14 +150,13 @@ export default function SignupPage() {
                   value={formData.country}
                   onChange={handleChange}
                   className="w-full appearance-none rounded-xl border border-border bg-surface py-3 pl-10 pr-4 text-sm text-heading transition-all focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                  required
                 >
                   {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
                 </select>
               </div>
             </div>
             <div className="col-span-2">
-              <AuthInput icon={Phone} name="phone" type="tel" value={formData.phone} onChange={handleChange} label="Phone Number" placeholder="1234 567 890" required />
+              <AuthInput icon={Phone} name="phone" type="tel" value={formData.phone} onChange={handleChange} label="Phone Number" placeholder="1234 567 890" />
             </div>
           </div>
 

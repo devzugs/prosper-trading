@@ -25,7 +25,7 @@ const DepositMethods = [
         tagColor: "bg-warning/10 text-warning",
         provider: null,
         details: {
-            bankName: "Marko Coric",
+            bankName: "Post-Bank",
             accountName: "Marko Coric",
             iban: "DE44 1001 00100078 0861 18",
             bicSwift: "PBNKDEFFXXX",

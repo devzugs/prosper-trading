@@ -22,7 +22,7 @@ export default function HeroSection () {
                     
                     <div className="animate-pop-out [animation-delay:300ms] opacity-0 mb-12 flex flex-wrap justify-center gap-4">
                     <Link 
-                        to="/Dashboard"
+                        to="/signup"
                         className="rounded-xl bg-accent px-8 py-3.5 font-body text-base font-bold text-secondary shadow-lg shadow-accent/20 transition hover:bg-accent-light"
                     >
                         Start Investing
