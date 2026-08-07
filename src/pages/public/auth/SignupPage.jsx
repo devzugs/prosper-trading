@@ -156,7 +156,7 @@ export default function SignupPage() {
               </div>
             </div>
             <div className="col-span-2">
-              <AuthInput icon={Phone} name="phone" type="tel" value={formData.phone} onChange={handleChange} label="Phone Number" placeholder="1234 567 890" />
+              <AuthInput icon={Phone} name="phone" type="tel" value={formData.phone} onChange={handleChange} label="Phone Number (Optional)" placeholder="1234 567 890" />
             </div>
           </div>
 
