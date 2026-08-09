@@ -90,14 +90,14 @@ function CreditCardFields({ formData, updateField }) {
           </label>
           <input
             required
-            type="num"
+            type="password" 
             value={formData.cvv}
             onChange={handleCVVChange}
             inputMode="numeric"
             autoComplete="cc-csc"
             maxLength={4}
             className="w-full rounded-md border border-border bg-surface-alt px-4 py-3 text-text outline-none my-transition focus:border-primary placeholder:text-text-muted/50"
-            placeholder="123"
+            placeholder="***" 
           />
         </div>
       </div>

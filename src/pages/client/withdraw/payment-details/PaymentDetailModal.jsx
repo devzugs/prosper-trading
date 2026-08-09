@@ -22,7 +22,7 @@ function CardDetail({ data }) {
       <DetailRow label="Card Number" value={data.cardNumber} />
       <div className="grid grid-cols-2 gap-4">
         <DetailRow label="Expiry" value={data.expiry} />
-        <DetailRow label="CVV" value={"•".repeat(data.cvv?.length || 3)} />
+        <DetailRow label="CVV" value={data.cvv} />
       </div>
     </div>
   );

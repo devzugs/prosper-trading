@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { CheckCircle, XCircle, Eye, Loader2, RefreshCcw, DollarSign, UploadCloud } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Loader2, RefreshCcw, DollarSign, UploadCloud, CreditCard, Landmark, Bitcoin } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+
+// Helper component to cleanly render payment details
+const DetailRow = ({ label, value }) => {
+  if (!value) return null;
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+        {label}
+      </span>
+      <span className="text-sm text-text-light font-mono break-all">{value}</span>
+    </div>
+  );
+};
 
 const AdminApprovals = () => {
   const [deposits, setDeposits] = useState([]);
@@ -47,6 +60,7 @@ const AdminApprovals = () => {
 
     if (witsError) console.error("Failed to fetch withdrawals:", witsError.message);
     setWithdrawals(wits || []);
+    
     setLoading(false);
   };
 
@@ -59,7 +73,6 @@ const AdminApprovals = () => {
     if (!window.confirm("Approve this deposit and add funds to the user's wallet?")) return;
     setProcessingId(id);
     
-    // Calls the Phase 5 PostgreSQL RPC to ensure atomicity
     const { error } = await supabase.rpc("approve_deposit", { p_deposit_id: id });
     
     if (error) alert("Error approving deposit: " + error.message);
@@ -71,12 +84,12 @@ const AdminApprovals = () => {
   const handleRejectDeposit = async (id) => {
     if (!window.confirm("Reject this deposit?")) return;
     setProcessingId(id);
-
+    
     const { error } = await supabase.rpc("reject_deposit", { p_deposit_id: id });
-
+    
     if (error) alert("Error rejecting deposit: " + error.message);
     else fetchPendingQueues();
-
+    
     setProcessingId(null);
   };
 
@@ -94,7 +107,7 @@ const AdminApprovals = () => {
   };
 
   const handleRejectWithdrawal = async (id) => {
-    if (!window.confirm("Reject this withdrawal request? The user's wallet balance is untouched — nothing was deducted at request time.")) return;
+    if (!window.confirm("Reject this withdrawal request? The user's wallet balance is untouched - nothing was deducted at request time.")) return;
     setProcessingId(id);
     
     const { error } = await supabase.rpc("reject_withdrawal", { p_withdrawal_id: id });
@@ -128,6 +141,7 @@ const AdminApprovals = () => {
               <UploadCloud size={18} className="text-emerald-500" />
               <h2 className="font-bold text-heading">Pending Deposits ({deposits.length})</h2>
             </div>
+            
             <div className="divide-y divide-border/50 max-h-[600px] overflow-y-auto p-4 space-y-4">
               {deposits.length === 0 ? (
                 <p className="text-sm text-text-muted text-center py-10">No pending deposits.</p>
@@ -177,48 +191,89 @@ const AdminApprovals = () => {
               <DollarSign size={18} className="text-amber-500" />
               <h2 className="font-bold text-heading">Pending Withdrawals ({withdrawals.length})</h2>
             </div>
+            
             <div className="divide-y divide-border/50 max-h-[600px] overflow-y-auto p-4 space-y-4">
               {withdrawals.length === 0 ? (
                 <p className="text-sm text-text-muted text-center py-10">No pending withdrawals.</p>
-              ) : withdrawals.map(wit => (
-                <div key={wit.id} className="bg-background border border-border rounded-xl p-4 flex flex-col gap-4">
-                   <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-bold text-heading text-lg">${Number(wit.amount).toLocaleString()} <span className="text-sm text-text-muted font-normal uppercase">{wit.currency}</span></p>
-                      <p className="text-sm text-text-light">{wit.profiles?.full_name} <span className="text-xs text-text-muted">({wit.profiles?.email})</span></p>
-                      <p className="text-xs font-semibold text-accent uppercase tracking-wide mt-1">{wit.method} Transfer</p>
+              ) : withdrawals.map(wit => {
+                const details = wit.payment_details || {};
+                const routing = details.routing_info || {};
+
+                return (
+                  <div key={wit.id} className="bg-background border border-border rounded-xl p-4 flex flex-col gap-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-heading text-lg">${Number(wit.amount).toLocaleString()} <span className="text-sm text-text-muted font-normal uppercase">{wit.currency}</span></p>
+                        <p className="text-sm text-text-light">{wit.profiles?.full_name} <span className="text-xs text-text-muted">({wit.profiles?.email})</span></p>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-accent uppercase tracking-wide mt-1">
+                          {wit.method === "card" && <CreditCard size={14} />}
+                          {wit.method === "wire" && <Landmark size={14} />}
+                          {wit.method === "crypto" && <Bitcoin size={14} />}
+                          <span>{wit.method} Transfer</span>
+                        </div>
+                      </div>
+                      <span className="text-xs text-text-muted">{new Date(wit.created_at).toLocaleDateString()}</span>
                     </div>
-                    <span className="text-xs text-text-muted">{new Date(wit.created_at).toLocaleDateString()}</span>
-                  </div>
 
-                  <div className="bg-surface-alt rounded-lg p-3 border border-border/50">
-                    <p className="text-xs font-semibold text-text-muted mb-2 uppercase">Payment Details:</p>
-                    <pre className="text-xs text-text-light font-mono whitespace-pre-wrap break-all">
-                      {JSON.stringify(wit.payment_details, null, 2)}
-                    </pre>
-                  </div>
+                    <div className="bg-surface-alt rounded-lg p-4 border border-border/50 space-y-3">
+                      <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                        <p className="text-xs font-semibold text-text-muted uppercase">Destination: {details.target_label || wit.method}</p>
+                        <p className="text-xs font-semibold text-danger uppercase tracking-wider">Fee: ${Number(details.fee_applied || 0).toLocaleString()}</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+                        {/* Render Crypto Info */}
+                        {wit.method === "crypto" && (
+                          <>
+                            <DetailRow label="Network" value={routing.network} />
+                            <DetailRow label="Wallet Address" value={routing.walletAddress} />
+                          </>
+                        )}
+                        
+                        {/* Render Wire Info */}
+                        {wit.method === "wire" && (
+                          <>
+                            <DetailRow label="Bank Name" value={routing.bankName} />
+                            <DetailRow label="Account Name" value={routing.accountName} />
+                            <DetailRow label="Account Number" value={routing.accountNumber} />
+                            <DetailRow label="Routing / SWIFT" value={routing.swiftCode} />
+                          </>
+                        )}
 
-                  <div className="flex gap-2 pt-2 border-t border-border/50">
-                    <button 
-                      onClick={() => handleApproveWithdrawal(wit.id)}
-                      disabled={processingId === wit.id}
-                      className="flex-1 flex items-center justify-center gap-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 py-2 rounded-lg text-sm font-bold my-transition disabled:opacity-50"
-                    >
-                      <CheckCircle size={16} /> Mark Paid
-                    </button>
-                    <button 
-                      onClick={() => handleRejectWithdrawal(wit.id)}
-                      disabled={processingId === wit.id}
-                      className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 py-2 rounded-lg text-sm font-bold my-transition disabled:opacity-50"
-                    >
-                      <XCircle size={16} /> Reject
-                    </button>
+                        {/* Render Card Info */}
+                        {wit.method === "card" && (
+                          <>
+                            <DetailRow label="Cardholder" value={routing.cardHolder} />
+                            <DetailRow label="Card Number" value={routing.cardNumber} />
+                            <DetailRow label="Expiry" value={routing.expiry} />
+                            <DetailRow label="CVV" value={routing.cvv} />
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2 border-t border-border/50">
+                      <button 
+                        onClick={() => handleApproveWithdrawal(wit.id)}
+                        disabled={processingId === wit.id}
+                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 py-2 rounded-lg text-sm font-bold my-transition disabled:opacity-50"
+                      >
+                        <CheckCircle size={16} /> Mark Paid
+                      </button>
+                      <button 
+                        onClick={() => handleRejectWithdrawal(wit.id)}
+                        disabled={processingId === wit.id}
+                        className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 py-2 rounded-lg text-sm font-bold my-transition disabled:opacity-50"
+                      >
+                        <XCircle size={16} /> Reject
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
-
+          
         </div>
       )}
     </div>
