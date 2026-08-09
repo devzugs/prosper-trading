@@ -9,7 +9,7 @@ import {
 import { supabase } from "../../../lib/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
 import useCryptoData from "../../../hooks/UseCryptoData";
-import { calculateTotalROI } from "../../../lib/roiCalculator";
+import { calculateTotalROI, calculateTotalDaysActive } from "../../../lib/roiCalculator";
 
 const fmtUSD = (n) =>
     `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -73,7 +73,7 @@ const Portfolio = () => {
     }, [user]);
 
     // 2. Calculate live USD values (Auto-updates when crypto prices change)
-    const { portfolioValue, availableBalance, totalROI } = useMemo(() => {
+    const { portfolioValue, availableBalance, totalROI, totalTrades } = useMemo(() => {
         const getUsdValue = (amount, currencySymbol) => {
             const amt = Number(amount || 0);
             const sym = (currencySymbol || "USD").toLowerCase();
@@ -96,8 +96,12 @@ const Portfolio = () => {
         const startDate = profile?.plan_start_date;
         const pastROI = profile?.accumulated_roi || 0;
 
+        const pastDays = profile?.accumulated_days || 0; 
+
         // 3. Calculate dynamic ROI (Current active ROI + Historical ROI)
         const calculatedROI = calculateTotalROI(baseDepositValue, plan, startDate, pastROI);
+        
+        const calculatedTrades = calculateTotalDaysActive(startDate, pastDays);
 
         // 4. Total Portfolio Value = Base Deposits + Accrued ROI
         const portVal = baseDepositValue + calculatedROI;
@@ -105,7 +109,12 @@ const Portfolio = () => {
         // 5. Sum up admin adjustments for Available Balance
         const availBal = rawAdjustments.reduce((sum, adj) => sum + getUsdValue(adj.amount, adj.currency), 0);
 
-        return { portfolioValue: portVal, availableBalance: availBal, totalROI: calculatedROI };
+        return { 
+        portfolioValue: portVal, 
+        availableBalance: availBal, 
+        totalROI: calculatedROI, 
+        totalTrades: calculatedTrades 
+    };
     }, [rawDeposits, rawAdjustments, coins, profile]);
 
     const isLoading = dbLoading || cryptoLoading;
@@ -169,7 +178,11 @@ const Portfolio = () => {
                     </span>
                 </div>
                 <div className="flex items-baseline gap-2 mt-1">
-                    <h3 className="text-2xl sm:text-3xl font-bold text-heading">0</h3>
+                    {isLoading ? (
+                        <Loader2 size={22} className="animate-spin text-accent" />
+                    ) : (
+                        <h3 className="text-2xl sm:text-3xl font-bold text-heading">{totalTrades}</h3>
+                    )}
                     <div className="flex items-center gap-0.5 text-text-muted">
                         <span className="text-xs font-semibold">--</span>
                     </div>
