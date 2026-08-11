@@ -42,11 +42,13 @@ const UserIdentity = ({
   name,
   avatarSrc,
   className = "",
+  fallbackClassName, 
   fallbackName = DEFAULT_USER_NAME,
   fallbackInitials = DEFAULT_USER_INITIALS,
   imageAlt = "User profile photo",
 }) => {
   const { profile, user } = useAuth();
+  const resolvedAvatarSrc = avatarSrc ?? profile?.avatar_url;
   const fullName = getUserFullName({
     name,
     profile,
@@ -58,21 +60,21 @@ const UserIdentity = ({
   if (variant === "initials") return initials;
 
   if (variant === "avatar") {
-    if (avatarSrc) {
-      return (
-        <img
-          src={avatarSrc}
-          alt={imageAlt}
-          className={className}
-        />
-      );
-    }
+      if (resolvedAvatarSrc) {
+            return (
+              <img
+                src={resolvedAvatarSrc}
+                alt={imageAlt}
+                className={className}
+              />
+            );
+          }
 
-    return (
-      <div className={className} aria-label={fullName}>
-        {initials}
-      </div>
-    );
+          return (
+            <div className={className} aria-label={fullName}>
+              {initials}
+            </div>
+          );
   }
 
   return fullName;

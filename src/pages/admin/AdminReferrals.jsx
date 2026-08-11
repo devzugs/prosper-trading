@@ -194,9 +194,9 @@ const AdminReferrals = () => {
             <Loader2 className="animate-spin text-accent" />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
+          <div className="w-full">
+            <table className="w-full block md:table">
+              <thead className="hidden md:table-header-group">
                 <tr className="border-b border-border">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Referrer</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Referred User</th>
@@ -206,44 +206,66 @@ const AdminReferrals = () => {
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="block md:table-row-group">
                 {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-12 text-sm text-text-muted">
+                  <tr className="block md:table-row">
+                    <td colSpan={6} className="text-center py-12 text-sm text-text-muted block md:table-cell">
                       No referrals match your search.
                     </td>
                   </tr>
                 ) : (
                   filtered.map((r) => (
-                    <tr key={r.id} className="border-b border-border/50 last:border-0 hover:bg-surface my-transition">
-                      <td className="px-5 py-4">
-                        <p className="text-sm font-semibold text-heading">{r.referrerProfile?.full_name || "—"}</p>
-                        <p className="text-xs text-text-muted">{r.referrerProfile?.email}</p>
+                    <tr key={r.id} className="block md:table-row border-b border-border/50 last:border-0 hover:bg-surface my-transition p-4 md:p-0">
+                      
+                      {/* Referrer Column */}
+                      <td className="flex justify-between items-center md:table-cell px-2 py-3 md:px-5 md:py-4 border-b border-border/20 md:border-none">
+                        <span className="md:hidden text-xs font-semibold text-text-muted uppercase tracking-wider">Referrer</span>
+                        <div className="text-right md:text-left">
+                          <p className="text-sm font-semibold text-heading">{r.referrerProfile?.full_name || " "}</p>
+                          <p className="text-xs text-text-muted">{r.referrerProfile?.email}</p>
+                        </div>
                       </td>
-                      <td className="px-5 py-4">
-                        <p className="text-sm text-text-light">{r.referredProfile?.full_name || "—"}</p>
-                        <p className="text-xs text-text-muted">{r.referredProfile?.email}</p>
+
+                      {/* Referred User Column */}
+                      <td className="flex justify-between items-center md:table-cell px-2 py-3 md:px-5 md:py-4 border-b border-border/20 md:border-none">
+                        <span className="md:hidden text-xs font-semibold text-text-muted uppercase tracking-wider">Referred User</span>
+                        <div className="text-right md:text-left">
+                          <p className="text-sm text-text-light">{r.referredProfile?.full_name || " "}</p>
+                          <p className="text-xs text-text-muted">{r.referredProfile?.email}</p>
+                        </div>
                       </td>
-                      <td className="px-5 py-4">
+
+                      {/* Status Column */}
+                      <td className="flex justify-between items-center md:table-cell px-2 py-3 md:px-5 md:py-4 border-b border-border/20 md:border-none">
+                        <span className="md:hidden text-xs font-semibold text-text-muted uppercase tracking-wider">Status</span>
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_STYLES[r.status] || STATUS_STYLES.inactive}`}>
                           {r.status}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-right text-sm font-bold text-heading tabular-nums">
-                        ${Number(r.commission_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+
+                      {/* Commission Column */}
+                      <td className="flex justify-between items-center md:table-cell px-2 py-3 md:px-5 md:py-4 border-b border-border/20 md:border-none text-right">
+                        <span className="md:hidden text-xs font-semibold text-text-muted uppercase tracking-wider">Commission</span>
+                        <span className="text-sm font-bold text-heading tabular-nums">
+                          ${Number(r.commission_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </span>
                       </td>
-                      <td className="px-5 py-4 text-right text-sm text-text-muted">
-                        {new Date(r.created_at).toLocaleDateString()}
+
+                      {/* Date Column */}
+                      <td className="flex justify-between items-center md:table-cell px-2 py-3 md:px-5 md:py-4 border-b border-border/20 md:border-none text-right">
+                        <span className="md:hidden text-xs font-semibold text-text-muted uppercase tracking-wider">Date</span>
+                        <span className="text-sm text-text-muted">
+                          {new Date(r.created_at).toLocaleDateString()}
+                        </span>
                       </td>
-                      <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={() => setModalReferral(r)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent/80 my-transition"
-                        >
-                          <Gift size={13} />
-                          Credit
+
+                      {/* Action Column */}
+                      <td className="flex justify-end md:table-cell px-2 py-4 md:px-5 md:py-4 text-right">
+                        <button onClick={() => setModalReferral(r)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent/80 my-transition">
+                          <Gift size={13} /> Credit
                         </button>
                       </td>
+
                     </tr>
                   ))
                 )}

@@ -6,12 +6,11 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    // C2 FIX: invoke() always sends POST — reject every other method up front
-    if (req.method !== 'POST') {
-      return new Response(
-        JSON.stringify({ message: 'Method not allowed.' }),
-        { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    if (req.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: { ...corsHeaders, 'Access-Control-Max-Age': '86400' }
+      })
     }
 
     const authHeader = req.headers.get('Authorization') ?? ''

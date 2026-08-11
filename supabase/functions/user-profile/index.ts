@@ -3,14 +3,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsHeaders } from "../_shared/cors.ts"
 
 serve(async (req) => {
-  // FIX #7: Improved CORS preflight response
   if (req.method === 'OPTIONS') {
+    // Return the shared corsHeaders as-is. Do NOT override Access-Control-Allow-Headers
+    // here — the shared object already includes x-client-info and apikey which
+    // supabase-js attaches automatically. Overriding it was stripping those headers
+    // and causing the browser to block the preflight.
     return new Response(null, {
       status: 204,
       headers: {
         ...corsHeaders,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Max-Age': '86400',
       }
     })
@@ -39,7 +40,8 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
     if (authError || !user) throw new Error("Unauthorized request.")
 
-    const { action, fullName, phone, country, bio, avatar } = await req.json()
+    const body = await req.json()
+    const { action, fullName, email, phone, country, bio, avatar } = body
 
     if (action !== 'update') {
       throw new Error("Unknown action. Use action: 'update'.")
@@ -55,20 +57,29 @@ serve(async (req) => {
       updates.full_name = fullName.trim()
     }
 
-    if (phone !== undefined && phone !== null) {
-      // Validate phone format (basic validation)
-      const cleanPhone = phone.replace(/[\s\-\(\)]/g, '')
-      if (!/^\+?[0-9]{7,15}$/.test(cleanPhone)) {
-        throw new Error("Invalid phone number format. Use 7-15 digits with optional + prefix")
+    if (email !== undefined && email !== null) {
+      if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        throw new Error("Please provide a valid email address")
       }
-      updates.phone = phone.trim()
+
+      const normalizedEmail = email.trim().toLowerCase()
+      if (normalizedEmail !== user.email?.toLowerCase()) {
+        // Supabase may require the user to confirm this change by email,
+        // depending on the project's Auth settings.
+        const { error: emailError } = await supabaseClient.auth.updateUser({ email: normalizedEmail })
+        if (emailError) throw emailError
+      }
+      updates.email = normalizedEmail
+    }
+
+    if (phone !== undefined && phone !== null) {
+      if (typeof phone !== 'string') throw new Error("Phone number must be a string")
+      updates.phone = phone.trim() || null
     }
 
     if (country !== undefined && country !== null) {
-      if (typeof country !== 'string' || country.trim().length === 0) {
-        throw new Error("Country must be a non-empty string")
-      }
-      updates.country = country.trim()
+      if (typeof country !== 'string') throw new Error("Country must be a string")
+      updates.country = country.trim() || null
     }
 
     if (bio !== undefined && bio !== null) {
@@ -82,7 +93,9 @@ serve(async (req) => {
       updates.bio = bio.trim()
     }
 
-    if (avatar !== undefined && avatar !== null) {
+    if (Object.hasOwn(body, 'avatar') && avatar === null) {
+      updates.avatar_url = null
+    } else if (avatar !== undefined && avatar !== null) {
       if (typeof avatar !== 'string' || avatar.trim().length === 0) {
         throw new Error("Avatar URL must be a non-empty string")
       }

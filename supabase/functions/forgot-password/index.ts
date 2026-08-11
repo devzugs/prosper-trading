@@ -4,9 +4,12 @@ import { corsHeaders } from "../_shared/cors.ts"
 import { Resend } from "npm:resend"
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+ if (req.method === 'OPTIONS') {
+  return new Response(null, {
+    status: 204,
+    headers: { ...corsHeaders, 'Access-Control-Max-Age': '86400' }
+  })
+}
 
   try {
     const { email } = await req.json()

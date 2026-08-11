@@ -182,14 +182,8 @@ const DashboardTopBar = ({
                 <UserIdentity
                   variant="avatar"
                   name={user?.name}
-                  className="
-                    flex h-9 w-9
-                    items-center justify-center
-                    rounded-full
-                    bg-accent/15
-                    text-xs font-bold
-                    text-accent
-                  "
+                  className="h-9 w-9 shrink-0 rounded-full object-cover"
+                  fallbackClassName="flex h-9 w-9 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent"
                 />
 
                 <div className="hidden lg:flex flex-col text-left">

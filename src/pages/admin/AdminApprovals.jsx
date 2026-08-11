@@ -32,7 +32,7 @@ const AdminApprovals = () => {
         profiles ( full_name, email )
       `)
       .eq("status", "pending")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
 
     if (depsError) console.error("Failed to fetch deposits:", depsError.message);
 
@@ -56,7 +56,7 @@ const AdminApprovals = () => {
         profiles ( full_name, email )
       `)
       .eq("status", "pending")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
 
     if (witsError) console.error("Failed to fetch withdrawals:", witsError.message);
     setWithdrawals(wits || []);

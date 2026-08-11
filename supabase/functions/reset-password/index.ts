@@ -3,18 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsHeaders } from "../_shared/cors.ts"
 
 serve(async (req) => {
-  // FIX #7: Improved CORS preflight response
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        ...corsHeaders,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-      }
-    })
-  }
+  return new Response(null, {
+    status: 204,
+    headers: { ...corsHeaders, 'Access-Control-Max-Age': '86400' }
+  })
+}
 
   try {
     const { token, newPassword, newPasswordConfirm } = await req.json()

@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Camera, Trash2, Check, LoaderCircle } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 import { supabase, API_URL } from "../../../lib/supabaseClient";
 import UserIdentity, { getUserFullName } from "../../../components/user/UserIdentity";
 import SettingsCard from "./SettingsCard";
-import { isValidPhoneNumber } from "libphonenumber-js";
 import COUNTRIES from "../../../constants/countries";
 
 const ProfileSettings = () => {
@@ -25,6 +24,19 @@ const ProfileSettings = () => {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+
+  // A profile is loaded asynchronously after the auth session. Keep the form in
+  // sync so data collected during signup appears on first visit to Settings.
+  useEffect(() => {
+    setForm({
+      fullName: getUserFullName({ profile, user }) || "",
+      email: profile?.email || user?.email || "",
+      phone: profile?.phone || "",
+      country: profile?.country || "",
+      bio: profile?.bio || "",
+    });
+    setAvatarPreview(profile?.avatar_url || null);
+  }, [profile, user]);
 
   const update = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
 
@@ -73,8 +85,8 @@ const ProfileSettings = () => {
       return;
     }
 
-    if (form.phone && !isValidPhoneNumber(form.phone)) {
-      setError("Invalid phone number format. Please check the country and number.");
+    if (!form.email.trim()) {
+      setError("Email address is required.");
       return;
     }
 
@@ -96,6 +108,7 @@ const ProfileSettings = () => {
         body: {
           action: 'update',
           fullName: form.fullName,
+          email: form.email,
           phone: form.phone,
           country: form.country,
           bio: form.bio,
@@ -103,7 +116,16 @@ const ProfileSettings = () => {
         }
       });
 
-      if (error) throw new Error(error.message || "Failed to update profile");
+      if (error) {
+        let message = error.message || "Failed to update profile";
+        // Supabase wraps non-2xx Edge Function responses in a generic error.
+        // Read the response body so clients can act on the actual cause.
+        if (error.context instanceof Response) {
+          const result = await error.context.json().catch(() => null);
+          message = result?.message || message;
+        }
+        throw new Error(message);
+      }
       
       if (updateProfile) await updateProfile(data.user);
 
@@ -170,9 +192,10 @@ const ProfileSettings = () => {
             <input
               type="email"
               value={form.email}
-              disabled
+              onChange={update("email")}
               placeholder="johndoe@example.com"
-              className="w-full cursor-not-allowed rounded-md border border-border bg-surface px-4 py-2.5 text-sm text-text opacity-60 outline-none"
+              disabled={loading}
+              className="my-transition w-full rounded-md border border-border bg-surface px-4 py-2.5 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
             />
           </div>
 

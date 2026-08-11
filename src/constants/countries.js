@@ -1,9 +1,14 @@
-// You can move this to src/constants/countries.js later
+import { getCountries } from "libphonenumber-js";
+
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+// Include every country supported by the phone-number library, plus a general
+// option for clients who do not want to provide a specific country yet.
 const COUNTRIES = [
-  { name: "United Kingdom", code: "GB" },
-  { name: "United States", code: "US" },
-  { name: "South Africa", code: "ZA" },
-  { name: "Kenya", code: "KE" },
+  { name: "General / Other", code: "ZZ" },
+  ...getCountries()
+    .map((code) => ({ name: countryNames.of(code), code }))
+    .sort((a, b) => a.name.localeCompare(b.name)),
 ];
 
 export default COUNTRIES;

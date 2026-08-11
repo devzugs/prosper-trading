@@ -5,16 +5,11 @@ import { corsHeaders } from "../_shared/cors.ts"
 serve(async (req) => {
   // FIX #7: Improved CORS preflight response
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        ...corsHeaders,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-      }
-    })
-  }
+  return new Response(null, {
+    status: 204,
+    headers: { ...corsHeaders, 'Access-Control-Max-Age': '86400' }
+  })
+}
 
   try {
     // FIX #1: Authorization header null handling - ensure header is always a string

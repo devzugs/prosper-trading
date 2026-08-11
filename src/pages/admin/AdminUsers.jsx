@@ -388,9 +388,9 @@ const AdminUsers = () => {
             <Loader2 className="animate-spin text-accent" />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
+          <div className="w-full"> {/* Removed overflow-x-auto for the card layout */}
+            <table className="w-full block md:table">
+              <thead className="hidden md:table-header-group">
                 <tr className="border-b border-border">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">User</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Role / KYC</th>
@@ -399,68 +399,80 @@ const AdminUsers = () => {
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="block md:table-row-group">
                 {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-12 text-sm text-text-muted">
+                  <tr className="block md:table-row">
+                    <td colSpan={5} className="text-center py-12 text-sm text-text-muted block md:table-cell">
                       No users match your search.
                     </td>
                   </tr>
                 ) : (
                   filtered.map((u) => (
-                    <tr key={u.id} className="border-b border-border/50 last:border-0 hover:bg-surface my-transition">
-                      <td className="px-5 py-4">
-                        <p className="text-sm font-semibold text-heading">{u.full_name || " "}</p>
-                        <p className="text-xs text-text-muted">{u.email}</p>
+                    <tr key={u.id} className="block md:table-row border-b border-border/50 last:border-0 hover:bg-surface my-transition p-4 md:p-0">
+                      
+                      {/* User Column */}
+                      <td className="flex justify-between items-center md:table-cell px-2 py-3 md:px-5 md:py-4 border-b border-border/20 md:border-none">
+                        <span className="md:hidden text-xs font-semibold text-text-muted uppercase tracking-wider">User</span>
+                        <div className="text-right md:text-left">
+                          <p className="text-sm font-semibold text-heading">{u.full_name || " "}</p>
+                          <p className="text-xs text-text-muted">{u.email}</p>
+                        </div>
                       </td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          u.role === "admin" ? "bg-accent/10 text-accent" : "bg-surface text-text-muted"
-                        }`}>
-                          {u.role}
-                        </span>
-                        <p className="text-xs text-text-muted mt-1 capitalize">{u.kyc_status}</p>
-                      </td>
-                      <td className="px-5 py-4">
-                        {(walletsByUser[u.id] || []).length === 0 ? (
-                          <span className="text-xs text-text-muted flex items-center gap-1">
-                            <Wallet size={12} /> No wallets
+
+                      {/* Role / KYC Column */}
+                      <td className="flex justify-between items-center md:table-cell px-2 py-3 md:px-5 md:py-4 border-b border-border/20 md:border-none">
+                        <span className="md:hidden text-xs font-semibold text-text-muted uppercase tracking-wider">Role / KYC</span>
+                        <div className="text-right md:text-left">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                            u.role === "admin" ? "bg-accent/10 text-accent" : "bg-surface text-text-muted"
+                          }`}>
+                            {u.role}
                           </span>
-                        ) : (
-                          <div className="flex flex-wrap gap-1.5">
-                            {walletsByUser[u.id].map((w) => (
-                              <span key={w.currency} className="text-xs bg-surface border border-border rounded-md px-2 py-0.5 tabular-nums">
-                                {Number(w.cached_balance).toLocaleString("en-US", { maximumFractionDigits: 8 })} {w.currency}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                          <p className="text-xs text-text-muted mt-1 capitalize">{u.kyc_status}</p>
+                        </div>
                       </td>
-                      <td className="px-5 py-4 text-sm text-text-muted">
-                        {new Date(u.created_at).toLocaleDateString()}
+
+                      {/* Balances Column */}
+                      <td className="flex justify-between items-center md:table-cell px-2 py-3 md:px-5 md:py-4 border-b border-border/20 md:border-none">
+                        <span className="md:hidden text-xs font-semibold text-text-muted uppercase tracking-wider shrink-0 mr-4">Balances</span>
+                        <div className="text-right md:text-left">
+                          {(walletsByUser[u.id] || []).length === 0 ? (
+                            <span className="text-xs text-text-muted flex items-center justify-end md:justify-start gap-1">
+                              <Wallet size={12} /> No wallets
+                            </span>
+                          ) : (
+                            <div className="flex flex-wrap justify-end md:justify-start gap-1.5">
+                              {walletsByUser[u.id].map((w) => (
+                                <span key={w.currency} className="text-xs bg-surface border border-border rounded-md px-2 py-0.5 tabular-nums">
+                                  {Number(w.cached_balance).toLocaleString("en-US", { maximumFractionDigits: 8 })} {w.currency}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-5 py-4 text-right flex flex-col items-end gap-2">
-                        <button
-                          onClick={() => setMethodsModalUser(u)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-500 hover:text-blue-400 my-transition"
-                        >
-                          <CreditCard size={13} />
-                          View Payment Methods
-                        </button>
-                        <button
-                          onClick={() => setModalUser(u)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent/80 my-transition"
-                        >
-                          <SlidersHorizontal size={13} />
-                          Adjust Balance
-                        </button>
-                        <button
-                          onClick={() => setPlanModalUser(u)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-500 hover:text-emerald-400 my-transition"
-                        >
-                          <TrendingUp size={13} />
-                          Update Plan
-                        </button>
+
+                      {/* Joined Column */}
+                      <td className="flex justify-between items-center md:table-cell px-2 py-3 md:px-5 md:py-4 border-b border-border/20 md:border-none">
+                        <span className="md:hidden text-xs font-semibold text-text-muted uppercase tracking-wider">Joined</span>
+                        <span className="text-sm text-text-muted">
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </span>
+                      </td>
+
+                      {/* Actions Column */}
+                      <td className="flex justify-end md:table-cell px-2 py-4 md:px-5 md:py-4">
+                        <div className="flex flex-row md:flex-col items-center md:items-end gap-4 md:gap-2">
+                          <button onClick={() => setMethodsModalUser(u)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-500 hover:text-blue-400 my-transition">
+                            <CreditCard size={13} /> <span className="hidden sm:inline">Methods</span>
+                          </button>
+                          <button onClick={() => setModalUser(u)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent/80 my-transition">
+                            <SlidersHorizontal size={13} /> <span className="hidden sm:inline">Balance</span>
+                          </button>
+                          <button onClick={() => setPlanModalUser(u)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-500 hover:text-emerald-400 my-transition">
+                            <TrendingUp size={13} /> <span className="hidden sm:inline">Plan</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

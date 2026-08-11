@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { User, Mail, Lock, Gift, LoaderCircle, Phone, Globe } from "lucide-react";
-import { parsePhoneNumber, isValidPhoneNumber } from "libphonenumber-js";
 import COUNTRIES from "../../../constants/countries";
 import AuthLayout from "./AuthLayout";
 import AuthInput from "./AuthInput";
@@ -39,17 +38,8 @@ export default function SignupPage() {
   };
 
   const validateForm = () => {
-    if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.password) {
+    if (!formData.fullName.trim() || !formData.email.trim() || !formData.password) {
       return "Please fill in all required fields.";
-    }
-    
-    // Phone validation using libphonenumber-js
-    try {
-      if (!isValidPhoneNumber(formData.phone, formData.country)) {
-        return "Please enter a valid phone number for the selected country.";
-      }
-    } catch (err) {
-      return "Invalid phone number format.";
     }
 
     if (formData.password.length < 8) {
@@ -73,12 +63,9 @@ export default function SignupPage() {
     try {
       setSubmitting(true);
       
-      // Format phone to strict E.164 before sending to backend
-      const formattedPhone = parsePhoneNumber(formData.phone, formData.country).number;
-
       const { data, error: authError } = await signUp(formData.email, formData.password, {
         full_name: formData.fullName,
-        phone: formattedPhone,
+        phone: formData.phone.trim() || null,
         country: formData.country,
         referral_code: formData.referralCode || null,
       });
