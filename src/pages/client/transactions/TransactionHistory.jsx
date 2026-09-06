@@ -14,6 +14,7 @@ import {
     Clock3,
     RotateCcw,
     Loader2,
+    X,
 } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
@@ -31,7 +32,7 @@ const TYPE_CONFIG = {
 const STATUS_CONFIG = {
     completed: { label: "Completed", className: "bg-success/10 text-success", icon: CheckCircle2 },
     pending:   { label: "Pending",   className: "bg-warning/15 text-warning", icon: Clock3       },
-    reversed:  { label: "Reversed",  className: "bg-danger/10 text-danger",   icon: RotateCcw    },
+    reversed:  { label: "Rejected",  className: "bg-danger/10 text-danger",   icon: X    },
 };
 
 const STATUS_FILTERS = ["All", "Completed", "Pending", "Reversed"];

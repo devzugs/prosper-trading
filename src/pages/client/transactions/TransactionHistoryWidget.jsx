@@ -25,7 +25,7 @@ const TYPE_CONFIG = {
 const STATUS_CONFIG = {
     completed: { label: "Completed", className: "bg-success/10 text-success" },
     pending:   { label: "Pending",   className: "bg-warning/15 text-warning" },
-    reversed:  { label: "Reversed",  className: "bg-danger/10 text-danger"   },
+    reversed:  { label: "Rejected",  className: "bg-danger/10 text-danger"   },
 };
 
 function formatDate(iso) {

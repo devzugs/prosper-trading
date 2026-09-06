@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {      
     ArrowUpRight, ArrowDownLeft, Gift, TrendingUp, SlidersHorizontal,      
-    ReceiptText, CheckCircle2, Clock3, RotateCcw, Loader2, Zap
+    ReceiptText, CheckCircle2, Clock3, RotateCcw, Loader2, Zap,
+    X
 } from "lucide-react"; 
 import { supabase } from "../../../lib/supabaseClient"; 
 import Modal from "../../../components/ui/Modal"; 
@@ -20,9 +21,7 @@ const TYPE_CONFIG = {
 const STATUS_CONFIG = {     
     completed: { label: "Completed", className: "bg-success/10 text-success", icon: CheckCircle2 },     
     pending:   { label: "Pending",   className: "bg-warning/15 text-warning", icon: Clock3       },     
-    reversed:  { label: "Reversed",  className: "bg-danger/10 text-danger",   icon: RotateCcw    },     
-    approved:  { label: "Approved",  className: "bg-success/10 text-success", icon: CheckCircle2 },     
-    rejected:  { label: "Rejected",  className: "bg-danger/10 text-danger",   icon: RotateCcw    }, 
+    reversed:  { label: "Rejected",  className: "bg-danger/10 text-danger",   icon: RotateCcw    }, 
 };
 
 const DetailRow = ({ label, value, copyable = false }) => {     
