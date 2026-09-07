@@ -8,6 +8,7 @@ import WithdrawStepAmount from "./WithdrawStepAmount";
 import WithdrawStepReview from "./WithdrawStepReview";
 import { supabase } from "../../../../lib/supabaseClient";
 import { useAuth } from "../../../../context/AuthContext";
+import useCryptoData from "../../../../hooks/UseCryptoData";
 
 const WithdrawPage = () => {
   const { user } = useAuth();
@@ -17,22 +18,33 @@ const WithdrawPage = () => {
   const [amount, setAmount] = useState(0);
   const [savedMethods, setSavedMethods] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [availableBalance, setAvailableBalance] = useState(0);
 
-  // 1. Fetch saved methods from DB
+  const { coins: cryptoPrices, loading: cryptoLoading } = useCryptoData("bitcoin,ethereum,tether,binancecoin,solana,usd-coin");
+
   useEffect(() => {
     if (!user) return;
-    const fetchMethods = async () => {
-      const { data, error } = await supabase
-        .from("payment_methods")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+    const fetchData = async () => {
+      const [
+        { data: methodsData, error: methodsError },
+        { data: adjustmentsData, error: adjustmentsError }
+      ] = await Promise.all([
+        supabase
+          .from("payment_methods")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        
+        supabase
+          .from("transactions")
+          .select("amount, currency")
+          .eq("user_id", user.id)
+          .eq("type", "adjustment")
+      ]);
 
-      if (!error && data) {
-        // Map DB types to UI styling and extract display details
-        const formatted = data.map((m) => {
+      if (!methodsError && methodsData) {
+        const formatted = methodsData.map((m) => {
           let icon, bg, accent, eta, detail;
-          
           if (m.method === 'crypto') {
             icon = Bitcoin; bg = "bg-orange-500/10"; accent = "text-orange-500"; eta = "< 1 hour";
             detail = `Network: ${m.details.network} | ${m.details.walletAddress?.slice(0, 6)}...${m.details.walletAddress?.slice(-4)}`;
@@ -43,38 +55,35 @@ const WithdrawPage = () => {
             icon = CreditCard; bg = "bg-purple-500/10"; accent = "text-purple-500"; eta = "1-3 business days";
             detail = `Card: ...${m.details.cardNumber?.slice(-4)}`;
           }
-
           return { ...m, icon, bg, accent, eta, detail };
         });
         setSavedMethods(formatted);
       }
+
+      if (!adjustmentsError && adjustmentsData && cryptoPrices) {
+         // Calculate strictly based on admin adjustments to match the Portfolio calculation
+         const totalAvailableUsd = adjustmentsData.reduce((sum, adj) => {
+            const amt = Number(adj.amount || 0);
+            const sym = (adj.currency || "USD").toLowerCase();
+            
+            if (sym === "usd" || sym === "usdt") return sum + amt;
+            
+            const liveCoin = cryptoPrices?.find(c => c.symbol.toLowerCase() === sym || c.id.toLowerCase() === sym);
+            return sum + (liveCoin ? amt * liveCoin.current_price : amt);
+         }, 0);
+         
+         setAvailableBalance(totalAvailableUsd);
+      }
       setLoading(false);
     };
 
-    fetchMethods();
-  }, [user]);
+    if (!cryptoLoading) fetchData();
+  }, [user, cryptoPrices, cryptoLoading]);
 
-  const pickCoin = (w) => {
-    setCoin(w);
-    setStep(2);
-  };
-
-  const pickMethod = (m) => {
-    setMethod(m);
-    setStep(3);
-  };
-
-  const confirmAmount = (amt) => {
-    setAmount(amt);
-    setStep(4);
-  };
-
-  const reset = () => {
-    setCoin(null);
-    setMethod(null);
-    setAmount(0);
-    setStep(1);
-  };
+  const pickCoin = (w) => { setCoin(w); setStep(2); };
+  const pickMethod = (m) => { setMethod(m); setStep(3); };
+  const confirmAmount = (amt) => { setAmount(amt); setStep(4); };
+  const reset = () => { setCoin(null); setMethod(null); setAmount(0); setStep(1); };
 
   return (
     <div className="min-h-screen">
@@ -103,7 +112,16 @@ const WithdrawPage = () => {
             )
           )}
 
-          {step === 3 && <WithdrawStepAmount coin={coin} method={method} onBack={() => setStep(2)} onContinue={confirmAmount} />}
+          {step === 3 && (
+              <WithdrawStepAmount 
+                  coin={coin} 
+                  method={method} 
+                  availableBalance={availableBalance}
+                  onBack={() => setStep(2)} 
+                  onContinue={confirmAmount} 
+              />
+          )}
+          
           {step === 4 && <WithdrawStepReview coin={coin} method={method} amount={amount} onBack={() => setStep(3)} onReset={reset} />}
         </div>
       </div>

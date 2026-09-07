@@ -5,29 +5,33 @@ import { getMinWithdrawal, WITHDRAWAL_FEE_PCT } from "./withdrawData";
 const fmt = (n) =>
   Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 });
 
-// The available balance for this step comes from the wallet the user just
-// picked in WithdrawStepCoin (coin.cached_balance) — no need to re-fetch it
-// here, and no assumption that the currency is USD. `coin.currency` is
-// whatever the user is withdrawing (e.g. "Bitcoin", "USD", "Tether") and
-// must match the exact string stored in wallets.currency, since that's what
-// determines both the minimum withdrawal here and the balance check the
-// server runs later in approve_withdrawal.
-const WithdrawStepAmount = ({ coin, method, onBack, onContinue }) => {
+// `availableBalance` is now passed down from WithdrawPage (dynamically calculated 
+// from admin adjustments) to enforce consistency with the Portfolio screen.
+const WithdrawStepAmount = ({ coin, method, availableBalance = 0, onBack, onContinue }) => {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
 
-  const availableBalance = Number(coin?.cached_balance ?? 0);
-  const currency = coin?.currency ?? "";
+  const currency = coin?.currency ?? "USD"; 
   const minWithdrawal = getMinWithdrawal(currency);
 
   const numeric = parseFloat(value) || 0;
   const fee = numeric * (WITHDRAWAL_FEE_PCT / 100);
   const youReceive = Math.max(numeric - fee, 0);
+  
+  // Disable submission if error exists or input is 0
+  const isInvalid = numeric <= 0 || numeric > availableBalance;
 
   const handleChange = (e) => {
     const v = e.target.value.replace(/[^0-9.]/g, "");
     setValue(v);
-    if (error) setError("");
+    
+    // Live validation
+    const num = parseFloat(v) || 0;
+    if (num > availableBalance) {
+        setError(`Amount exceeds your available balance.`);
+    } else {
+        setError("");
+    }
   };
 
   const handleMax = () => {
@@ -38,13 +42,12 @@ const WithdrawStepAmount = ({ coin, method, onBack, onContinue }) => {
   const handleContinue = () => {
     if (!value || numeric <= 0) return setError("Please enter an amount to withdraw.");
     if (numeric < minWithdrawal) return setError(`Minimum withdrawal is ${fmt(minWithdrawal)} ${currency}.`);
-    if (numeric > availableBalance) return setError(`Amount exceeds your available ${currency} balance.`);
+    if (numeric > availableBalance) return setError(`Amount exceeds your available balance.`);
     onContinue(numeric);
   };
 
   return (
     <div className="animate-[fade-up_0.4s_ease_forwards]">
-      {/* Header section... */}
       <div className="flex items-center gap-3 mb-5">
         <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-accent my-transition">
           <ChevronLeft size={15} /> Back
@@ -69,7 +72,7 @@ const WithdrawStepAmount = ({ coin, method, onBack, onContinue }) => {
           <label className="text-sm font-semibold text-heading">Amount to withdraw</label>
           <p className="text-xs text-text-muted flex items-center gap-2">
             Available:{" "}
-            <span className="text-text-light font-medium">{fmt(availableBalance)} {currency}</span>
+            <span className="text-text-light font-medium">{fmt(availableBalance)} USD</span>
           </p>
         </div>
 
@@ -80,10 +83,12 @@ const WithdrawStepAmount = ({ coin, method, onBack, onContinue }) => {
             value={value}
             onChange={handleChange}
             placeholder="0.00"
-            className="w-full rounded-md border border-border bg-surface px-4 py-3.5 text-xl font-bold text-heading outline-none my-transition focus:border-accent"
+            className={`w-full rounded-md border bg-surface px-4 py-3.5 text-xl font-bold text-heading outline-none my-transition focus:border-accent ${
+              error ? "border-danger" : "border-border"
+            }`}
           />
           <span className="absolute right-20 top-1/2 -translate-y-1/2 text-text-muted text-sm font-semibold">
-            {currency}
+            USD
           </span>
           <button
             type="button"
@@ -95,12 +100,12 @@ const WithdrawStepAmount = ({ coin, method, onBack, onContinue }) => {
         </div>
 
         <p className="text-xs text-text-muted mt-2">
-          Minimum withdrawal: {fmt(minWithdrawal)} {currency}
+          Minimum withdrawal: {fmt(minWithdrawal)} USD
         </p>
 
-        {numeric > 0 && (
+        {numeric > 0 && !error && (
           <p className="text-xs text-text-muted mt-1">
-            Fee ({WITHDRAWAL_FEE_PCT}%): {fmt(fee)} {currency} — you'll receive {fmt(youReceive)} {currency}
+            Fee ({WITHDRAWAL_FEE_PCT}%): {fmt(fee)} USD — you'll receive {fmt(youReceive)} USD
           </p>
         )}
 
@@ -114,7 +119,8 @@ const WithdrawStepAmount = ({ coin, method, onBack, onContinue }) => {
 
       <button
         onClick={handleContinue}
-        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-light text-secondary font-bold text-sm py-3 rounded-xl my-transition"
+        disabled={isInvalid}
+        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-light text-secondary font-bold text-sm py-3 rounded-xl my-transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Continue <ChevronRight size={15} />
       </button>

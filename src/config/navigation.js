@@ -29,7 +29,7 @@ export const APP_SIDEBAR_NAV = [
       { label: "Deposit", to: "/deposit", icon: ArrowDownToLine },
       {
         label: "Withdraw",
-        to: "/dashboard/withdraw",
+        to: "/withdraw",
         icon: ArrowUpFromLine,
         children: [
           { label: "Withdraw", to: "/withdraw", icon: Wallet},

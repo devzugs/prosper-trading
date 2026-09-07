@@ -13,23 +13,43 @@ const WithdrawStepCoin = ({ onSelectCoin }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchWallets = async () => {
+    const fetchAvailableBalances = async () => {
       if (!user) return;
+      
+      // Fetch only adjustment transactions to represent available withdrawal balance
       const { data, error: fetchError } = await supabase
-        .from("wallets")
-        .select("currency, cached_balance")
+        .from("transactions")
+        .select("currency, amount")
         .eq("user_id", user.id)
-        .gt("cached_balance", 0)
-        .order("cached_balance", { ascending: false });
+        .eq("type", "adjustment");
 
       if (fetchError) {
         setError("Couldn't load your balances. Please try again.");
-      } else {
-        setWallets(data || []);
+        setLoading(false);
+        return;
       }
+
+      // Group and sum the adjustments by currency
+      const balances = (data || []).reduce((acc, tx) => {
+        const coin = tx.currency.toUpperCase();
+        acc[coin] = (acc[coin] || 0) + Number(tx.amount);
+        return acc;
+      }, {});
+
+      // Format into an array and filter out 0 or negative balances
+      const availableWallets = Object.entries(balances)
+        .filter(([_, balance]) => balance > 0)
+        .map(([currency, balance]) => ({
+          currency,
+          available_balance: balance
+        }))
+        .sort((a, b) => b.available_balance - a.available_balance);
+
+      setWallets(availableWallets);
       setLoading(false);
     };
-    fetchWallets();
+    
+    fetchAvailableBalances();
   }, [user]);
 
   if (loading) {
@@ -75,7 +95,7 @@ const WithdrawStepCoin = ({ onSelectCoin }) => {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-heading text-base uppercase">{w.currency}</p>
               <p className="text-sm text-text-muted mt-0.5">
-                Available: {fmt(w.cached_balance)} {w.currency}
+                Available: {fmt(w.available_balance)} {w.currency}
               </p>
             </div>
 
