@@ -41,7 +41,7 @@ const WithdrawStepAmount = ({ coin, method, availableBalance = 0, onBack, onCont
 
   const handleContinue = () => {
     if (!value || numeric <= 0) return setError("Please enter an amount to withdraw.");
-    if (numeric < minWithdrawal) return setError(`Minimum withdrawal is ${fmt(minWithdrawal)} ${currency}.`);
+    if (numeric < minWithdrawal) return setError(`Minimum withdrawal is $${fmt(minWithdrawal)}.`);
     if (numeric > availableBalance) return setError(`Amount exceeds your available balance.`);
     onContinue(numeric);
   };
@@ -100,7 +100,7 @@ const WithdrawStepAmount = ({ coin, method, availableBalance = 0, onBack, onCont
         </div>
 
         <p className="text-xs text-text-muted mt-2">
-          Minimum withdrawal: {fmt(minWithdrawal)} USD
+          Minimum withdrawal: ${fmt(minWithdrawal)}
         </p>
 
         {numeric > 0 && !error && (
