@@ -21,8 +21,9 @@ const WithdrawStepCoin = ({ onSelectCoin }) => {
         .from("transactions")
         .select("currency, amount")
         .eq("user_id", user.id)
-        .eq("type", "adjustment");
-
+        .eq("status", "completed")
+        .in("type", ["adjustment", "withdrawal"])
+        
       if (fetchError) {
         setError("Couldn't load your balances. Please try again.");
         setLoading(false);

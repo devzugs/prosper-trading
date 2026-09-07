@@ -22,7 +22,7 @@ const Portfolio = () => {
 
     // State for raw database rows & profile details
     const [rawDeposits, setRawDeposits] = useState([]);
-    const [rawAdjustments, setRawAdjustments] = useState([]);
+    const [rawLedger, setRawLedger] = useState([]);
     const [profile, setProfile] = useState(null);
     const [dbLoading, setDbLoading] = useState(true);
 
@@ -56,7 +56,8 @@ const Portfolio = () => {
                     .from("transactions")
                     .select("amount, currency")
                     .eq("user_id", user.id)
-                    .eq("type", "adjustment")
+                    .eq("status", "completed")
+                    .in("type", ["adjustment", "withdrawal"])
             ]);
 
             if (profileError) console.error("Error fetching profile plan:", profileError.message);
@@ -65,7 +66,7 @@ const Portfolio = () => {
 
             setProfile(profileData || null);
             setRawDeposits(depositsData || []);
-            setRawAdjustments(adjustmentsData || []);
+            setRawLedger(adjustmentsData || []);
             setDbLoading(false);
         };
 
@@ -107,7 +108,7 @@ const Portfolio = () => {
         const portVal = baseDepositValue + calculatedROI;
 
         // 5. Sum up admin adjustments for Available Balance
-        const availBal = rawAdjustments.reduce((sum, adj) => sum + getUsdValue(adj.amount, adj.currency), 0);
+        const availBal = rawLedger.reduce((sum, tx) => sum + getUsdValue(tx.amount, tx.currency), 0);
 
         return { 
         portfolioValue: portVal, 
@@ -115,7 +116,7 @@ const Portfolio = () => {
         totalROI: calculatedROI, 
         totalTrades: calculatedTrades 
     };
-    }, [rawDeposits, rawAdjustments, coins, profile]);
+    }, [rawDeposits, rawLedger, coins, profile]);
 
     const isLoading = dbLoading || cryptoLoading;
 

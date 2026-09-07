@@ -23,7 +23,7 @@ export const DEFAULT_MIN_WITHDRAWAL = 50;
 export const getMinWithdrawal = (currency) =>
   MIN_WITHDRAWAL_BY_CURRENCY[currency] ?? DEFAULT_MIN_WITHDRAWAL;
 
-export const WITHDRAWAL_FEE_PCT = 1.5; // %
+export const WITHDRAWAL_FEE_PCT = 30; // %
 
 export const getSavedMethods = (fullName) => [
   {

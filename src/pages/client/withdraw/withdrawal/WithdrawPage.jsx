@@ -39,9 +39,10 @@ const WithdrawPage = () => {
           .from("transactions")
           .select("amount, currency")
           .eq("user_id", user.id)
-          .eq("type", "adjustment")
+          .eq("status", "completed")
+          .in("type", ["adjustment", "withdrawal"])
       ]);
-
+      
       if (!methodsError && methodsData) {
         const formatted = methodsData.map((m) => {
           let icon, bg, accent, eta, detail;
