@@ -109,13 +109,13 @@ const TransactionReceiptModal = ({ transaction, onClose }) => {
                                 to='/deposit'
                                 className="w-full bg-accent text-center text-secondary text-sm font-semibold py-3 px-4 rounded-lg hover:bg-accent/90 transition-colors"
                             >
-                                Clear with 20% Fee
+                                Clear with 30% Fee
                             </Link>
                             <Link 
                                 to='/referral'
                                 className="w-full text-center bg-surface-alt border border-accent text-accent text-sm font-semibold py-3 px-4 rounded-lg hover:bg-accent/10 transition-colors"
                             >
-                                Clear with 0-3 Referrals
+                                Clear with 5 Referrals
                             </Link>
                         </div>
                     </div>
