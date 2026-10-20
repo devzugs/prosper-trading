@@ -117,21 +117,21 @@ const DashboardTopBar = ({
             {/* Notifications */}
             <div className="relative">
               <button
-                onClick={() => {
+                disabled
+                /* onClick={() => {
                   setNotifOpen((v) => !v);
                   setUserOpen(false);
-                }}
+                }} */
                 className="
                   relative rounded-lg p-2
-                  text-text-light
+                  text-text-light opacity-50 cursor-not-allowed
                   transition
-                  hover:bg-white/5
-                  hover:text-white
                 "
-                aria-label={`${unreadCount} unread notifications`}
+                aria-label="Notifications coming soon"
               >
                 <Bell size={20} />
 
+                {/* Temporarily hidden unread badge 
                 {unreadCount > 0 && (
                   <span
                     className="
@@ -154,6 +154,7 @@ const DashboardTopBar = ({
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
+                */}
               </button>
 
               <NotificationPanel
@@ -162,6 +163,7 @@ const DashboardTopBar = ({
               />
             </div>
 
+            
             {/* User Menu */}
             <div className="relative">
               <button
