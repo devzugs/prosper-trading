@@ -3,13 +3,16 @@ import React from "react";
 import { Check } from "lucide-react";
 import { REFERRAL_TIERS } from "./referralData";
 
-const ReferralTiers = ({ activeReferrals = 0 }) => {
+const ReferralTiers = ({ activeReferrals = 0, tiers = [] }) => {
+  const displayTiers = tiers.map(tier => ({ ...REFERRAL_TIERS.find(t => t.id === tier.id), ...tier,
+    requirement: tier.maxReferrals === null ? `${tier.minReferrals}+ active referrals` : `${tier.minReferrals} - ${tier.maxReferrals} active referrals`,
+  }));
   // Current tier = highest tier whose minReferrals the user has met.
-  const currentIndex = REFERRAL_TIERS.reduce(
+  const currentIndex = displayTiers.reduce(
     (best, tier, i) => (activeReferrals >= tier.minReferrals ? i : best),
     0
   );
-  const nextTier = REFERRAL_TIERS[currentIndex + 1];
+  const nextTier = displayTiers[currentIndex + 1];
   const referralsToNextTier = nextTier ? Math.max(nextTier.minReferrals - activeReferrals, 0) : 0;
 
   return (
@@ -20,7 +23,7 @@ const ReferralTiers = ({ activeReferrals = 0 }) => {
         <p className="text-sm text-text-muted">
           {nextTier ? (
             <>
-              Refer <span className="text-accent font-semibold">{referralsToNextTier} more</span> to reach the next tier.
+              Gain <span className="text-accent font-semibold">{referralsToNextTier} more active referrals</span> to reach the next tier.
             </>
           ) : (
             <span className="text-accent font-semibold">You've reached the highest tier.</span>
@@ -30,7 +33,7 @@ const ReferralTiers = ({ activeReferrals = 0 }) => {
 
       {/* ── Unified Tiers Panel ── */}
       <div className="bg-surface-alt border border-border rounded-xl flex flex-col lg:flex-row overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-border shadow-sm my-transition">
-        {REFERRAL_TIERS.map((tier, i) => {
+        {displayTiers.map((tier, i) => {
           const Icon = tier.icon;
           const isCurrent = i === currentIndex;
           const isUnlocked = i <= currentIndex;

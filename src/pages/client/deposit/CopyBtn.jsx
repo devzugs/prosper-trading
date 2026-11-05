@@ -6,13 +6,19 @@ import { CheckCheck,
 // ─── Copy button ──────────────────────────────────────────────────────────────
 const CopyBtn = ({ text }) => {
     const [copied, setCopied] = useState(false);
-    const handleCopy = () => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+    const [error, setError] = useState(false);
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setError(false);
+            setTimeout(() => setCopied(false), 2000);
+        } catch { setError(true); }
     };
     return (
         <button
+            type="button"
+            disabled={!text}
             onClick={handleCopy}
             className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border my-transition
                 ${copied
@@ -21,7 +27,7 @@ const CopyBtn = ({ text }) => {
                 }`}
         >
             {copied ? <CheckCheck size={13} /> : <Copy size={13} />}
-            {copied ? "Copied!" : "Copy"}
+            {error ? "Copy failed — retry" : copied ? "Copied!" : "Copy"}
         </button>
     );
 };

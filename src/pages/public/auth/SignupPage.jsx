@@ -5,6 +5,7 @@ import { User, Mail, Lock, Gift, LoaderCircle, Phone, Globe } from "lucide-react
 import COUNTRIES from "../../../constants/countries";
 import AuthLayout from "./AuthLayout";
 import AuthInput from "./AuthInput";
+import { supabase } from "../../../lib/supabaseClient";
 
 
 
@@ -62,12 +63,17 @@ export default function SignupPage() {
 
     try {
       setSubmitting(true);
+      if (formData.referralCode.trim()) {
+        const { data: valid, error: codeError } = await supabase.rpc("valid_referral_code", { p_code: formData.referralCode.trim() });
+        if (codeError) { setError("Unable to validate the referral code. Please try again."); return; }
+        if (!valid) { setError("This referral code is invalid. Check the code or remove it to continue."); return; }
+      }
       
       const { data, error: authError } = await signUp(formData.email, formData.password, {
         full_name: formData.fullName,
         phone: formData.phone.trim() || null,
         country: formData.country,
-        referral_code: formData.referralCode || null,
+        referral_code: formData.referralCode.trim().toUpperCase() || null,
       });
 
       if (authError) {

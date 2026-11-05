@@ -1,22 +1,22 @@
 // src/pages/client/referral/ReferralStats.jsx
 import React from "react";
+import { formatReferralMoney as fmt } from "./formatReferralMoney";
 import { Users, UserCheck, DollarSign, Clock3 } from "lucide-react";
 
-const fmt = (n) => `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const ReferralStats = ({ stats }) => {
   const {
     totalReferrals = 0,
     activeReferrals = 0,
-    totalEarned = 0,
-    pendingPayouts = 0,
+    totalEarned = {},
+    availableEarned = {},
   } = stats || {};
 
   const cards = [
     { label: "Total Referrals",  value: totalReferrals,      icon: Users },
     { label: "Active Referrals", value: activeReferrals,     icon: UserCheck },
     { label: "Total Referral Earnings",   value: fmt(totalEarned),    icon: DollarSign },
-    { label: "Available Referral Earnings", value: fmt(pendingPayouts), icon: Clock3 },
+    { label: "Available Referral Earnings", value: fmt(availableEarned), icon: Clock3 },
   ];
 
   return (
@@ -32,7 +32,7 @@ const ReferralStats = ({ stats }) => {
               <Icon size={18} className="text-accent" />
             </span>
           </div>
-          <h3 className="text-2xl sm:text-3xl font-bold text-heading mt-1">{value}</h3>
+          <h3 className="text-xl font-bold text-heading mt-1 break-words">{value}</h3>
         </div>
       ))}
     </div>

@@ -1,115 +1,59 @@
-// src/pages/client/referral/ReferralPage.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import ReferralStats from "./ReferralStats";
 import ReferralLinkCard from "./ReferralLinkCard";
 import ReferralTiers from "./ReferralTiers";
 import ReferredUsersTable from "./ReferredUsersTable";
 import { supabase } from "../../../lib/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
-import { Loader2 } from "lucide-react";
 
-const ReferralPage = () => {
-  const { user, profile } = useAuth();
-  const [referredUsers, setReferredUsers] = useState([]);
-  const [stats, setStats] = useState({ totalReferrals: 0, totalEarned: 0, activeReferrals: 0, pendingPayouts: 0 });
-  const [loading, setLoading] = useState(true);
-
+export default function ReferralPage() {
+  const { user } = useAuth();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(0);
+  const [revision, setRevision] = useState(0);
   useEffect(() => {
-    if (!user) return;
-
-    const fetchReferralsData = async () => {
-      const { data: refs, error } = await supabase
-        .from('referrals')
-        .select('*')
-        .eq('referrer_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("Error fetching referrals:", error);
-        setLoading(false);
-        return;
-      }
-
-      const referredIds = refs.map(r => r.referred_id);
-      let profilesMap = {};
-      
-      if (referredIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .in('id', referredIds);
-          
-        profilesMap = (profiles || []).reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
-      }
-
-      const combinedUsers = refs.map(r => {
-        const name = profilesMap[r.referred_id]?.full_name || "Unknown User";
-        return {
-          id: r.id,
-          name: name,
-          initials: name.substring(0, 2).toUpperCase(),
-          status: r.status || 'pending',
-          plan: 'Standard', 
-          joinedDate: r.created_at,
-          totalDeposited: 0, 
-          commissionEarned: r.commission_amount || 0
-        };
-      });
-
-      setReferredUsers(combinedUsers);
-
-      const { data: txs } = await supabase
-        .from('transactions')
-        .select('amount, status')
-        .eq('user_id', user.id)
-        .eq('type', 'referral_bonus')
-        .in('status', ['completed', 'pending']);
-
-      const totalEarned = (txs || [])
-        .filter(t => t.status === 'completed')
-        .reduce((sum, t) => sum + Number(t.amount), 0);
-
-      const pendingPayouts = (txs || [])
-        .filter(t => t.status === 'pending')
-        .reduce((sum, t) => sum + Number(t.amount), 0);
-
-      setStats({
-        totalReferrals: combinedUsers.length,
-        totalEarned,
-        activeReferrals: combinedUsers.filter(u => u.status === 'active').length,
-        pendingPayouts
-      });
-      
-      setLoading(false);
+    let disposed = false;
+    let busy = false;
+    setData(null);
+    const refresh = async () => {
+      if (!user?.id || busy) return;
+      busy = true;
+      try {
+        const { data: result, error: failure } = await supabase.rpc("referral_dashboard", { p_offset: page * 25 });
+        if (failure) throw failure;
+        if (!disposed) { setData(result); setError(""); }
+      } catch (failure) {
+        if (!disposed) setError(failure.message || "Unable to load referrals.");
+      } finally { busy = false; }
     };
+    refresh();
+    const timer = setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    return () => { disposed = true; clearInterval(timer); window.removeEventListener("focus", refresh); };
+  }, [user?.id, page, revision]);
 
-    fetchReferralsData();
-  }, [user]);
-
-  return (
-    <div className="min-h-screen">
-      <div className="p-6 pb-0">
-        <h1 className="text-2xl sm:text-3xl font-bold text-heading">Affiliate Program</h1>
-        <p className="text-sm text-text-muted mt-1">Invite friends and earn up to 15% of their trading fees.</p>
-      </div>
-
-      <div className="p-6 space-y-6">
-        {loading ? (
-          <div className="flex justify-center p-10"><Loader2 className="animate-spin text-accent" /></div>
-        ) : (
-          <>
-            <ReferralStats stats={stats} />
-            <div className="flex flex-col gap-6">
-              <ReferralLinkCard referralCode={profile?.referral_code} />
-              <ReferralTiers activeReferrals={stats.activeReferrals} />
-            </div>
-
-            <ReferredUsersTable users={referredUsers} />
-          </>
-        )}
-      </div>
+  return <div className="p-6 space-y-6">
+    <div className="flex justify-between gap-3">
+      <div><h1 className="text-2xl font-bold text-heading">Affiliate Program</h1>
+        <p className="text-sm text-text-muted">Earn up to {data?.tiers?.at(-1)?.commission ?? 40}% on approved referral deposits, credited by an administrator.</p></div>
+      <button onClick={() => setRevision(v => v + 1)} className="text-accent">Refresh</button>
     </div>
-  );
-};
-
-export default ReferralPage;
+    {error && <p role="alert" className="text-danger">{error} Use Refresh to retry. Previously loaded figures may be out of date.</p>}
+    {!data && !error && <Loader2 aria-label="Loading referrals" className="animate-spin text-accent" />}
+    {data && <>
+      <ReferralStats stats={data.stats} />
+      <p className="text-xs text-text-muted">Active referrals are approved by an administrator. Earnings are credited to your wallet. Wallet spending uses referral earnings first; pending withdrawals reduce available earnings. <Link className="text-accent" to="/withdraw">Withdraw</Link></p>
+      <ReferralLinkCard referralCode={data.referralCode} />
+      <ReferralTiers activeReferrals={data.stats.activeReferrals} tiers={data.tiers} />
+      <ReferredUsersTable users={data.users.map(u => ({ ...u, initials: u.name.slice(0, 2).toUpperCase() }))} />
+      {data.stats.totalReferrals > 25 && <div className="flex justify-between text-accent">
+        <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
+        <span>Page {page + 1} of {Math.ceil(data.stats.totalReferrals / 25)}</span>
+        <button disabled={(page + 1) * 25 >= data.stats.totalReferrals} onClick={() => setPage(p => p + 1)}>Next</button>
+      </div>}
+    </>}
+  </div>;
+}

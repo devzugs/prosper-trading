@@ -5,7 +5,7 @@ import CopyBtn from "../deposit/CopyBtn";
 const ReferralLinkCard = ({ referralCode }) => {
   // Use window.location.origin to dynamically adapt to localhost or production
   const domain = window.location.origin;
-  const referralLink = `${domain}/signup?ref=${referralCode || "loading..."}`;
+  const referralLink = referralCode ? `${domain}/signup?ref=${encodeURIComponent(referralCode)}` : "";
 
   return (
     <div className="bg-surface-alt rounded-xl border border-border p-6">
@@ -16,14 +16,14 @@ const ReferralLinkCard = ({ referralCode }) => {
         <div>
           <h3 className="text-base font-semibold text-heading">Your Referral Link</h3>
           <p className="text-xs text-text-muted mt-0.5">
-            Share this link — you'll earn a commission on every deposit your referrals make.
+            Share this link. New signups appear automatically; an administrator activates referrals and credits eligible approved deposits.
           </p>
         </div>
       </div>
 
       <div className="bg-secondary border border-border rounded-lg px-4 py-3 flex items-center gap-3 overflow-hidden mb-3">
         <code className="text-sm text-accent font-mono flex-1 break-all leading-relaxed">
-          {referralLink}
+          {referralLink || "Referral code unavailable. Refresh to try again."}
         </code>
         <CopyBtn text={referralLink} />
       </div>

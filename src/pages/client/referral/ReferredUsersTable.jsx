@@ -1,7 +1,7 @@
 import React from "react";
 import { Users } from "lucide-react";
+import { formatReferralMoney as fmt } from "./formatReferralMoney";
 
-const fmt = (n) => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
@@ -21,7 +21,7 @@ const ReferredUsersTable = ({ users = [] }) => {
         <h2 className="text-xl sm:text-2xl font-bold text-heading">Your Referrals</h2>
         {!isEmpty && (
           <p className="text-xs text-text-muted">
-            {users.length} referral{users.length !== 1 ? "s" : ""}
+            {users.length} referral{users.length !== 1 ? "s" : ""} on this page
           </p>
         )}
       </div>
