@@ -34,9 +34,21 @@ begin
   assert n = 1, 'Duplicate commission';
   result := public.referral_dashboard(u);
   assert (result #>> '{stats,totalEarned,USD}')::numeric = 100, 'Bronze rate failed';
-  assert (result #>> '{stats,availableEarned,USD}')::numeric = 100, 'Available balance failed';
+  assert (result #>> '{stats,availableEarned,USD}')::numeric = 0, 'Commission must not release available earnings';
+  perform public.admin_set_referral_available(u,25,'Separate admin availability');
+  perform public.admin_set_referral_available(u,25,'Retry');
+  assert (public.referral_dashboard(u) #>> '{stats,availableEarned,USD}')::numeric = 25, 'Admin availability failed';
+  assert (select count(*) = 1 from public.referral_availability_history where user_id = u), 'Duplicate availability audit';
+  begin
+    perform public.admin_set_referral_available(u,-1,'Invalid amount');
+    raise exception 'Negative availability accepted';
+  exception when raise_exception then if sqlerrm <> 'Available earnings must be a non-negative USD amount' then raise; end if; end;
   assert (select cached_balance = 100 from public.wallets where user_id = u and currency = 'USD'), 'Wallet double credit';
   perform set_config('request.jwt.claim.sub',child::text,true);
+  begin
+    perform public.admin_set_referral_available(u,500,'Unauthorized');
+    raise exception 'Non-admin availability change allowed';
+  exception when raise_exception then if sqlerrm <> 'Unauthorized' then raise; end if; end;
   begin
     perform public.referral_dashboard(u);
     raise exception 'Cross-user read allowed';
@@ -71,17 +83,20 @@ begin
   assert jsonb_array_length(result -> 'users') = 25, 'Pagination failed';
   assert jsonb_array_length(public.referral_dashboard(u,25) -> 'users') = 5, 'Second page failed';
   assert (result #>> '{stats,totalEarned,USD}')::numeric = 100, 'Currencies mixed';
-  -- Pending withdrawals reserve funds; rejected withdrawals release that reservation.
+  -- Wallet activity must not overwrite the separately managed referral card.
   d := gen_random_uuid();
   insert into public.withdrawals(id,user_id,currency,amount,status,method) values(d,u,'USD',25,'pending','crypto');
-  assert (public.referral_dashboard(u) #>> '{stats,availableEarned,USD}')::numeric = 75, 'Reservation failed';
+  assert (public.referral_dashboard(u) #>> '{stats,availableEarned,USD}')::numeric = 25, 'Withdrawal overwrote admin availability';
   perform public.reject_withdrawal(d);
-  assert (public.referral_dashboard(u) #>> '{stats,availableEarned,USD}')::numeric = 100, 'Reservation release failed';
+  assert (public.referral_dashboard(u) #>> '{stats,availableEarned,USD}')::numeric = 25, 'Rejection overwrote admin availability';
   select id into c from public.referral_commissions where referral_id = r and currency = 'USD';
   perform public.admin_reverse_referral_commission(c,'Test reversal');
   perform public.admin_reverse_referral_commission(c,'Test retry');
   assert (public.referral_dashboard(u) #>> '{stats,totalEarned,USD}')::numeric = 0, 'Reversal earnings failed';
   assert (select cached_balance = 0 from public.wallets where user_id = u and currency = 'USD'), 'Reversal wallet failed';
+  assert (public.referral_dashboard(u) #>> '{stats,availableEarned,USD}')::numeric = 25, 'Reversal overwrote admin availability';
+  perform public.admin_set_referral_available(u,0,'Reset available earnings');
+  assert (public.referral_dashboard(u) #>> '{stats,availableEarned,USD}')::numeric = 0, 'Admin reset failed';
   perform public.admin_set_referral_status(r,'inactive','Test inactive');
   assert (public.referral_dashboard(u) #>> '{stats,activeReferrals}')::int = 29, 'Inactivation failed';
   begin

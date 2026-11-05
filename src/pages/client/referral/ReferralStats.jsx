@@ -1,10 +1,16 @@
 // src/pages/client/referral/ReferralStats.jsx
 import React from "react";
-import { formatReferralMoney as fmt } from "./formatReferralMoney";
+import useCryptoData from "../../../hooks/UseCryptoData";
+import { referralUsdTotal, formatReferralUsd } from "./referralUsd";
 import { Users, UserCheck, DollarSign, Clock3 } from "lucide-react";
 
 
 const ReferralStats = ({ stats }) => {
+  const { coins, loading } = useCryptoData("bitcoin,ethereum,tether,binancecoin,solana,usd-coin");
+  const fmt = amounts => {
+    const value = referralUsdTotal(amounts, coins || []);
+    return value === null ? (loading ? "Loading price…" : "Price unavailable") : formatReferralUsd(value);
+  };
   const {
     totalReferrals = 0,
     activeReferrals = 0,

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
 import ReferralStats from "./ReferralStats";
 import ReferralLinkCard from "./ReferralLinkCard";
 import ReferralTiers from "./ReferralTiers";
@@ -45,7 +44,7 @@ export default function ReferralPage() {
     {!data && !error && <Loader2 aria-label="Loading referrals" className="animate-spin text-accent" />}
     {data && <>
       <ReferralStats stats={data.stats} />
-      <p className="text-xs text-text-muted">Active referrals are approved by an administrator. Earnings are credited to your wallet. Wallet spending uses referral earnings first; pending withdrawals reduce available earnings. <Link className="text-accent" to="/withdraw">Withdraw</Link></p>
+      <p className="text-xs text-text-muted">Approved referral commissions count toward total earnings, shown at current USD prices. Available referral earnings start at $0.00 and are set separately by an administrator.</p>
       <ReferralLinkCard referralCode={data.referralCode} />
       <ReferralTiers activeReferrals={data.stats.activeReferrals} tiers={data.tiers} />
       <ReferredUsersTable users={data.users.map(u => ({ ...u, initials: u.name.slice(0, 2).toUpperCase() }))} />

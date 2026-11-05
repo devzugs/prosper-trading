@@ -13,6 +13,9 @@ function ManageReferral({ referral, onClose, onDone }) {
   const [dashboard, setDashboard] = useState(null);
   const [depositId, setDepositId] = useState("");
   const [reversalReason, setReversalReason] = useState("");
+  const [availableAmount, setAvailableAmount] = useState("");
+  const [availableReason, setAvailableReason] = useState("");
+  const [availableHistory, setAvailableHistory] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
@@ -25,11 +28,14 @@ function ManageReferral({ referral, onClose, onDone }) {
           supabase.from("referral_commissions").select("id,deposit_id,amount,currency,rate,created_at,reversed_at,reversal_reason").eq("referral_id", referral.id).order("created_at", { ascending: false }),
           supabase.rpc("referral_dashboard", { p_user_id: referral.referrer_id }),
           supabase.from("referral_status_history").select("id,old_status,new_status,reason,created_at").eq("referral_id", referral.id).order("created_at", { ascending: false }).limit(20),
+          supabase.from("referral_availability_history").select("id,old_amount_usd,new_amount_usd,reason,created_at").eq("user_id", referral.referrer_id).order("created_at", { ascending: false }).limit(20),
         ]);
         const failure = results.find(r => r.error)?.error;
         if (failure) throw failure;
         if (live) {
           setDeposits(results[0].data); setCredits(results[1].data); setDashboard(results[2].data); setHistory(results[3].data); setError("");
+          setAvailableAmount(String(results[2].data.stats.availableEarned.USD ?? 0));
+          setAvailableHistory(results[4].data);
         }
       } catch (failure) { if (live) setError(failure.message); }
     };
@@ -42,6 +48,7 @@ function ManageReferral({ referral, onClose, onDone }) {
       const { error: failure } = await supabase.rpc(name, args);
       if (failure) throw failure;
       setDepositId(""); setReason(""); setReversalReason(""); setRevision(v => v + 1); onDone();
+      setAvailableReason("");
     } catch (failure) { setError(failure.message); }
     finally { setBusy(false); }
   };
@@ -54,6 +61,14 @@ function ManageReferral({ referral, onClose, onDone }) {
       <p className="text-text-muted">Referrer: {referral.referrerProfile?.full_name || referral.referrerProfile?.email}</p>
       {error && <p role="alert" className="text-danger">{error} <button onClick={() => setRevision(v => v + 1)}>Retry loading</button></p>}
       {dashboard && <ReferralStats stats={dashboard.stats} />}
+      <form className="space-y-3 border border-border rounded p-4" onSubmit={e => { e.preventDefault(); run("admin_set_referral_available", { p_user_id: referral.referrer_id, p_amount_usd: availableAmount, p_reason: availableReason }); }}>
+        <h3 className="font-semibold text-heading">Set available referral earnings (USD)</h3>
+        <p className="text-sm text-text-muted">This is the referrer's total available amount, not an additional credit. It starts at $0.00 and changes only when an admin sets it. This updates the referral card; wallet balances are managed separately.</p>
+        <label className="block">Available amount ($)<input required type="number" min="0" step="0.01" value={availableAmount} onChange={e => setAvailableAmount(e.target.value)} className="block w-full bg-surface-alt border border-border p-2 rounded" /></label>
+        <input required aria-label="Reason for available earnings change" placeholder="Reason for change" value={availableReason} onChange={e => setAvailableReason(e.target.value)} className="w-full bg-surface-alt border border-border p-2 rounded" />
+        <button disabled={busy || !dashboard || availableAmount === "" || !availableReason.trim()} className="bg-accent text-secondary rounded px-4 py-2 disabled:opacity-40">Save available earnings</button>
+        {availableHistory.map(h => <p key={h.id} className="text-xs text-text-muted">{money({ USD: h.old_amount_usd })} → {money({ USD: h.new_amount_usd })} · {h.reason} · {new Date(h.created_at).toLocaleString()}</p>)}
+      </form>
       <form className="space-y-3 border border-border rounded p-4" onSubmit={e => { e.preventDefault(); run("admin_set_referral_status", { p_referral_id: referral.id, p_status: status, p_reason: reason }); }}>
         <h3 className="font-semibold text-heading">Referral status</h3>
         <p className="text-sm text-text-muted">Activation qualifies this referral for deposit commissions and counts toward the referrer's tier. Inactivation keeps its history and earned commission.</p>
